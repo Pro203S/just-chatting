@@ -3,6 +3,10 @@ import next from "next";
 import { Server } from "socket.io";
 import c from 'chalk';
 import { internalIpV4 } from "internal-ip";
+import ora from "ora";
+
+const start = new Date().getTime();
+const loading = ora("Starting...").start();
 
 const dev = process.env.NODE_ENV !== "production";
 const port = Number(process.env.PORT || 3000);
@@ -41,5 +45,6 @@ io.on("connection", (socket) => {
 });
 
 httpServer.listen(port, hostname, () => {
-    console.log(c.green(`Server running on http://${hostname}:${port}`));
+    loading.succeed(`Server running on ` + c.green(`http://${hostname}:${port}`));
+    console.log(`  Ready in ` + c.cyanBright((new Date().getTime() - start) + "ms"));
 });
