@@ -1,11 +1,79 @@
 "use client";
 
+import { useEffect, useRef, useState } from 'react';
 import css from './page.module.css';
+import InOutAnimation from '@/src/components/InOutAnimation';
+import Link from 'next/link';
+import { animated, easings, useSpringValue } from '@react-spring/web';
+import axios from 'axios';
 
 export default function Page() {
-    
+    const idRef = useRef<HTMLInputElement>(null);
+    const pwRef = useRef<HTMLInputElement>(null);
+    const nameRef = useRef<HTMLInputElement>(null);
 
-    return <div className={css.container}>
+    const opacity = useSpringValue(1, {
+        "config": {
+            "duration": 480,
+            "easing": easings.easeOutCubic
+        }
+    });
 
-    </div>;
+    const [controlDisabled, setControlDisabled] = useState(false);
+
+    useEffect(() => {
+        if (controlDisabled) {
+            opacity.start(0.5);
+        } else {
+            opacity.start(1);
+        }
+    }, [controlDisabled]);
+
+    const handleSignUp = async () => {
+        try {
+            setControlDisabled(true);
+
+            const r = await axios.post("/api/users", {
+                "id": idRef.current?.value,
+                "pw": pwRef.current?.value,
+                "name": pwRef.current?.value
+            })
+        } catch (err) {
+            const e = err as Error;
+            alert(e.message);
+        } finally {
+            setControlDisabled(false);
+        }
+    };
+
+    return <InOutAnimation animate>
+        <animated.div className={css.container} style={{
+            opacity,
+            "pointerEvents": controlDisabled ? "none" : "auto"
+        }}>
+            <div className={css.form}>
+                <span className={css.title}>가입하기</span>
+                <div className={css.inputBox}>
+                    <span className={css.label} onClick={() => idRef.current && idRef.current.focus()}>ID</span>
+                    <input type="text" placeholder='ID 입력' ref={idRef} />
+                </div>
+                <div className={css.inputBox}>
+                    <span className={css.label} onClick={() => pwRef.current && pwRef.current.focus()}>비밀번호</span>
+                    <input type="password" placeholder='비밀번호 입력' ref={pwRef} />
+                </div>
+                <div className={css.inputBox}>
+                    <span className={css.label} onClick={() => nameRef.current && nameRef.current.focus()}>닉네임</span>
+                    <input type="text" placeholder='닉네임 입력' ref={nameRef} />
+                </div>
+                <div className={css.buttons}>
+                    <button className={css.primary} onClick={handleSignUp}>
+                        <span>가입하기</span>
+                    </button>
+                    <Link href="/login" className={css.secondary}>
+                        <span>로그인</span>
+                    </Link>
+                </div>
+            </div>
+        </animated.div>
+    </InOutAnimation>;
 }
