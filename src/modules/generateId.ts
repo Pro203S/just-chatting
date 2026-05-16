@@ -3,7 +3,7 @@ import { Database } from "./database";
 
 const HasDuplicate = (array: { "id": string }[], id: IdTypes) => array.map(v => v.id).includes(id);
 
-export default function generateId(type: IdPrefixes): IdTypes {
+export default function generateId<T extends IdPrefixes>(type: T): `${T}-${number}` {
     const id: IdTypes = `${type}-${randomInt(100000000)}`;
 
     let dup = false;
@@ -25,5 +25,5 @@ export default function generateId(type: IdPrefixes): IdTypes {
 
     if (dup) return generateId(type);
 
-    return id;
+    return id as `${T}-${number}`;
 }

@@ -3,8 +3,14 @@ import * as fs from 'node:fs';
 
 const DB_PATH = "./database.json";
 
-if (!fs.existsSync(DB_PATH))
-    Shadowly.generateNewJson(DB_PATH, false);
+if (!fs.existsSync(DB_PATH)) {
+    fs.writeFileSync(DB_PATH, JSON.stringify({
+        "users": [],
+        "attachments": [],
+        "messages": [],
+        "rooms": []
+    }), "utf-8");
+}
 
 
 export const Database = new Shadowly<Database>(DB_PATH);

@@ -4,8 +4,9 @@ declare global {
 
     type User = {
         "id": `USR-${number}`,
+        "userId": string,
         "name": string,
-        "profile": string,
+        "profile"?: string,
         "password": string
     };
 

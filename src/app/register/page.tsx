@@ -36,8 +36,16 @@ export default function Page() {
             const r = await axios.post("/api/users", {
                 "id": idRef.current?.value,
                 "pw": pwRef.current?.value,
-                "name": pwRef.current?.value
-            })
+                "name": nameRef.current?.value
+            }, {
+                "validateStatus": () => true
+            });
+            if (r.status !== 200) {
+                alert(r.data.message);
+                return;
+            }
+
+
         } catch (err) {
             const e = err as Error;
             alert(e.message);
