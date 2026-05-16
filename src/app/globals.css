@@ -10,9 +10,10 @@
 
 * {
     font-family: 'Pretendard';
-    overflow: hidden;
     user-select: none;
+    overflow: hidden;
     touch-action: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -36,4 +37,9 @@ body {
 
 ::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0);
+}
+
+::selection {
+    color: #111;
+    background-color: #fff;
 }

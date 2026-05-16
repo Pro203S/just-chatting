@@ -8,3 +8,34 @@
     height: 100vh;
 }
 
+.desc {
+    margin-top: 7px;
+    color: #fff;
+}
+
+.button {
+    margin-top: 10px;
+    display: flex;
+    padding: 7px;
+    background-color: #010101;
+    border-radius: 15px;
+    transition: .25s;
+    cursor: pointer;
+    border: #000 solid 0px;
+    text-decoration: none;
+}
+
+.button span {
+    font-size: 1.1rem;
+    color: #fff;
+}
+
+.button:hover {
+    filter: invert(100%);
+}
+
+.linearH {
+    display: flex;
+    flex-direction: row;
+    gap: 7px;
+}

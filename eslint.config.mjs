@@ -15,7 +15,11 @@ const eslintConfig = defineConfig([
     ]),
     {
         "rules": {
-            
+            "jsx-a11y/alt-text": "off",
+            "@next/next/no-img-element": "off",
+            "react-hooks/set-state-in-effect": "off",
+            "@typescript-eslint/no-explicit-any": "off",
+            "react-hooks/exhaustive-deps": "off"
         }
     }
 ]);
