@@ -31,23 +31,10 @@ export default function Page() {
         }
     }, [controlDisabled]);
 
-    const handleSignUp = async () => {
+    const handleSignIn = async () => {
         try {
             setControlDisabled(true);
 
-            const r = await axios.post("/api/users", {
-                "id": idRef.current?.value,
-                "pw": pwRef.current?.value,
-                "name": nameRef.current?.value
-            }, {
-                "validateStatus": () => true
-            });
-            if (r.status !== 204) {
-                alert(r.data.message);
-                return;
-            }
-
-            alert("가입하신걸 축하해요!\n이제 로그인해주세요.");
 
             redirect("/login");
         } catch (err) {
@@ -67,7 +54,7 @@ export default function Page() {
             "pointerEvents": controlDisabled ? "none" : "auto"
         }}>
             <div className={css.form}>
-                <span className={css.title}>가입하기</span>
+                <span className={css.title}>로그인</span>
                 <div className={css.inputBox}>
                     <span className={css.label} onClick={() => idRef.current && idRef.current.focus()}>ID</span>
                     <input type="text" placeholder='ID 입력' ref={idRef} />
@@ -76,16 +63,12 @@ export default function Page() {
                     <span className={css.label} onClick={() => pwRef.current && pwRef.current.focus()}>비밀번호</span>
                     <input type="password" placeholder='비밀번호 입력' ref={pwRef} />
                 </div>
-                <div className={css.inputBox}>
-                    <span className={css.label} onClick={() => nameRef.current && nameRef.current.focus()}>닉네임</span>
-                    <input type="text" placeholder='닉네임 입력' ref={nameRef} />
-                </div>
                 <div className={css.buttons}>
-                    <button className={css.primary} onClick={handleSignUp}>
-                        <span>가입하기</span>
+                    <button className={css.primary} onClick={handleSignIn}>
+                        <span>로그인</span>
                     </button>
                     <Link href="/login" className={css.secondary}>
-                        <span>로그인</span>
+                        <span>가입하기</span>
                     </Link>
                 </div>
             </div>

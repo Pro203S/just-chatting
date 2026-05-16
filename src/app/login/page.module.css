@@ -1,0 +1,86 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    width: 100vw;
+    height: 100vh;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border-radius: 25px;
+
+    border: #464646 solid 1px;
+    background-color: #1f1f1f;
+
+    gap: 15px;
+
+    min-width: 250px;
+}
+
+.form .title {
+    font-size: 1.89rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 auto;
+}
+
+.inputBox {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputBox .label {
+    color: #fff;
+    font-size: 1rem;
+    padding: 0 2px;
+}
+
+.inputBox input {
+    border: #000 solid 0px;
+    outline: none;
+    background-color: transparent;
+    border-bottom: #464646 solid 1px;
+    color: #fff;
+    font-size: 15px;
+}
+
+.buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.buttons .primary {
+    display: flex;
+    padding: 7px;
+    background-color: #010101;
+    border-radius: 15px;
+    transition: .25s;
+    cursor: pointer;
+    border: #000 solid 0px;
+    text-decoration: none;
+}
+
+.buttons .primary span {
+    font-size: 1.1rem;
+    color: #fff;
+}
+
+.buttons .primary:hover {
+    filter: invert(100%);
+}
+
+.buttons .secondary {
+    color: #858585;
+    text-decoration: none;
+    margin: auto 0;
+}
+
+.buttons .secondary:hover {
+    text-decoration: underline;
+}
