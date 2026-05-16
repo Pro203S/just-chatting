@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
             "message": "비밀번호를 입력해주세요!"
         }, { "status": 415 });
 
-        if (pw.length <= 8) return NextResponse.json({
+        if (pw.length < 8) return NextResponse.json({
             "message": "비밀번호는 8글자 이상이여야해요."
         }, { "status": 400 });
 
