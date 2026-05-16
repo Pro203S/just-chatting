@@ -1,10 +1,12 @@
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
+import c from 'chalk';
+import { internalIpV4 } from "internal-ip";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = Number(process.env.PORT || 3000);
-const hostname = "0.0.0.0";
+const hostname = await internalIpV4();
 
 const app = next({
     dev,
@@ -39,5 +41,5 @@ io.on("connection", (socket) => {
 });
 
 httpServer.listen(port, hostname, () => {
-    console.log(`Server running on http://${hostname}:${port}`);
+    console.log(c.green(`Server running on http://${hostname}:${port}`));
 });
