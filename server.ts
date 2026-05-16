@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import c from 'chalk';
 import { internalIpV4 } from "internal-ip";
 import ora from "ora";
+import './src/modules/database';
 
 const start = new Date().getTime();
 const loading = ora("Starting...").start();

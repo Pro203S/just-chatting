@@ -20,7 +20,10 @@
         ],
         "paths": {
             "@/*": ["./*"]
-        }
+        },
+        "types": [
+            "./src/declarations.d.ts"
+        ]
     },
     "include": [
         "next-env.d.ts",
