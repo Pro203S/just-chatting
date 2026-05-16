@@ -81,7 +81,7 @@ export default function Page() {
                 "transform": elem3_y.to((value) => `translateY(${value}px)`)
             }}
         >
-            <Link className={css.button} href="/account/signup">
+            <Link className={css.button} href="/account/register">
                 <span>가입하기</span>
             </Link>
         </animated.div>
