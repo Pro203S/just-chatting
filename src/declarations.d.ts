@@ -1,10 +1,4 @@
 declare global {
-    namespace NodeJs {
-        interface ProcessEnv {
-            readonly SECRET: string;
-        }
-    }
-
     type IdPrefixes = "USR" | "ATH" | "MSG" | "ROM";
     type IdTypes = User["id"] | Attachment["id"] | Message["id"] | Room["id"];
 
@@ -40,6 +34,10 @@ declare global {
         "attachments": Attachment[],
         "messages": Message[],
         "rooms": Room[]
+    };
+
+    type APIError = {
+        "message": string
     };
 }
 
