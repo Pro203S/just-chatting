@@ -27,7 +27,8 @@ export default function Page() {
     const [session, setSession] = useState<APIUser>();
     const [rooms, setRooms] = useState<Room[]>([]);
 
-    const [selectedRoom, setSelectedRoom] = useState<Room>();
+    const [room, setRoom] = useState<Room>();
+    const [members, setMembers] = useState<APIUser[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
 
     const [createRoomShow, setCreateRoomShow] = useState(false);
@@ -150,7 +151,20 @@ export default function Page() {
             location.reload();
             return;
         }
-        setSelectedRoom(rooms.find(v => v.id === id));
+        const room = rooms.find(v => v.id === id);
+        if (!room) {
+            alert("예기치 않은 오류가 발생했어요.");
+            location.reload();
+            return;
+        }
+        setRoom(room);
+        
+        const r = await REST<APIUser[], APIError>(`/api/rooms/${room.id}/members`);
+        if (!r.success) {
+            alert("예기치 않은 오류가 발생했어요.");
+            location.reload();
+            return;
+        }
 
         socket.current.emit("joinRoom", id);
     };
@@ -265,7 +279,7 @@ export default function Page() {
                         className={css.room}
                         onClick={() => handleRoomClick(v.id)}
                         style={{
-                            "backgroundColor": selectedRoom?.id === v.id ? "#464646" : undefined
+                            "backgroundColor": room?.id === v.id ? "#464646" : undefined
                         }}
                     >
                         <img draggable={false} src={v.icon} className={css.roomIcon} />
@@ -275,7 +289,7 @@ export default function Page() {
                         </div>
                     </button>)}
                 </div>
-                {!selectedRoom ?
+                {!room ?
                     <div className={css.blank}>
                         <div className={css.iconContainer}>
                             <FontAwesomeIcon icon={faPaperPlane} className={css.icon} />
@@ -285,8 +299,8 @@ export default function Page() {
                     <div className={css.chatting}>
                         <div className={css.roomHeader}>
                             <div className={css.roomInfo}>
-                                <img draggable={false} src={selectedRoom.icon} className={css.icon} />
-                                <span className={css.name}>{selectedRoom.name}</span>
+                                <img draggable={false} src={room.icon} className={css.icon} />
+                                <span className={css.name}>{room.name}</span>
                             </div>
                             <div className={css.roomMenus}>
                                 <Dropdown
@@ -307,7 +321,7 @@ export default function Page() {
                                         {
                                             "type": "separator"
                                         },
-                                        (selectedRoom.owner === session?.id ? {
+                                        (room.owner === session?.id ? {
                                             "label": <span style={{ "color": "#f81313" }}>삭제하기</span>,
                                             "onClick": () => {
 
@@ -327,10 +341,10 @@ export default function Page() {
                                 <Dropdown
                                     containerClassName={css.button}
                                     items={[
-                                        ...(selectedRoom.members.map(v => ({
+                                        ...(members.map(v => ({
                                             "label": v.name,
                                             "src": v.profile,
-                                            "disabled": selectedRoom.owner !== session?.id,
+                                            "disabled": room.owner !== session?.id,
                                             "onClick": () => {
                                                 setDialogTitle("유저 관리");
                                                 setDialogDesc(v.name + "\n이 유저에 대해 수행할 작업을 선택해주세요.");

@@ -1,0 +1,112 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    width: 100vw;
+    height: 100vh;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border-radius: 25px;
+
+    border: #464646 solid 1px;
+    background-color: #1f1f1f;
+
+    gap: 15px;
+
+    min-width: 300px;
+}
+
+.form .title {
+    font-size: 1.89rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 auto;
+}
+
+.button {
+    width: fit-content;
+    padding: 7px 12px;
+    border-radius: 50px;
+    background-color: #ffffff;
+    text-decoration: none;
+    transition-duration: .25s;
+    cursor: pointer;
+    border: 1px solid #ffffff00;
+    margin: auto 0;
+}
+
+.button span {
+    font-size: .96rem;
+    font-weight: 600;
+    color: #111;
+}
+
+.button:hover span {
+    color: #fff;
+}
+
+.button:hover {
+    background-color: #ffffff1f;
+    backdrop-filter: blur(5px);
+    border: 1px solid #ffffff1a;
+}
+
+.inputBox {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputBox .label {
+    color: #fff;
+    font-size: 1rem;
+    padding: 0 2px;
+}
+
+.inputBox input {
+    border: #000 solid 0px;
+    outline: none;
+    background-color: transparent;
+    border-bottom: #464646 solid 1px;
+    color: #fff;
+    font-size: 15px;
+}
+
+.profileBox {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    padding: 0 15px;
+}
+
+.profileBox .profile {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+}
+
+.secondary {
+    color: #858585;
+    text-decoration: none;
+    margin: auto 0;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    font-size: 1rem;
+}
+
+.secondary:hover {
+    text-decoration: underline;
+}
+
+.buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}

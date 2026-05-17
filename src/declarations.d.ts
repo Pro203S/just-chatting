@@ -69,7 +69,7 @@ declare global {
         "id": `ROM-${number}`,
         "name": string,
         "icon": string,
-        "members": APIUser[],
+        "members": User["id"][],
         "invitedUsers": User["id"][],
         "owner": User["id"];
     };
@@ -95,6 +95,12 @@ declare global {
         "access_token": string,
         "expires_in": number
     };
+
+    type APIUsersMePUT = {
+        "password": boolean,
+        "name": boolean,
+        "profile": boolean
+    }
 }
 
 export { };
