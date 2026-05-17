@@ -50,7 +50,7 @@ export async function POST(req: NextRequest, { params }: {
     "params": Promise<{ id: string }>
 }) {
     try {
-        const { invite }: { invite: User["id"] } = await req.json();
+        const { invite }: { invite: string } = await req.json();
 
         if (!invite) return NextResponse.json({
             "message": "초대할 사람을 제공해주세요."
@@ -80,7 +80,8 @@ export async function POST(req: NextRequest, { params }: {
             "message": "다시 가입해주세요."
         }, { "status": 403 });
 
-        if (users.findIndex(v => v.id === invite) === -1) return NextResponse.json({
+        const target = users.find(v => v.userId === invite);
+        if (!target) return NextResponse.json({
             "message": "초대할 상대를 찾을 수 없습니다."
         }, { "status": 404 });
 
@@ -94,7 +95,17 @@ export async function POST(req: NextRequest, { params }: {
             "message": "방장만 초대할 수 있습니다."
         }, { "status": 403 });
 
-        room.get("invitedUsers").add(invite);
+        const invitedUsers = room.get("invitedUsers").value();
+
+        if (room.value().members.includes(target.value().id)) return NextResponse.json({
+            "message": "이미 방에 참여해있습니다."
+        }, { "status": 400 });
+
+        if (invitedUsers.includes(target.value().id)) return NextResponse.json({
+            "message": "이미 초대했습니다."
+        }, { "status": 400 });
+
+        room.get("invitedUsers").add(target.value().id);
 
         return new Response(null, { "status": 204 });
     } catch (err) {
