@@ -1,0 +1,35 @@
+.header {
+    display: flex;
+    flex-direction: row;
+    padding: .5rem 1rem;
+    justify-content: space-between;
+    gap: 10px;
+    position: relative;
+    z-index: 20;
+    overflow: visible;
+    height: 50px;
+}
+
+.linearH {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+
+.linearH a {
+    text-decoration: none;
+    cursor: pointer;
+    color: #fff;
+    margin: auto 0;
+}
+
+.linearH a:hover {
+    text-decoration: underline;
+}
+
+.profile {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin: auto 0;
+}
