@@ -5,3 +5,8 @@
     width: 100vw;
     height: 100vh;
 }
+
+.screen {
+    display: flex;
+    flex-direction: row;
+}

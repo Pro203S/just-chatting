@@ -9,6 +9,25 @@ declare global {
         }
     }
 
+    type SocketEmitEvents = {
+        "identify": () => any;
+        "welcome": (session: APIUser) => any;
+
+        "messageCreate": (message: Message) => any;
+        "messageDelete": (message: Message) => any;
+        "messageEdit": (oldMsg: Message, newMsg: Message) => any;
+
+        "roomInvite": (room: Room) => any;
+        "roomJoin": (room: Room) => any;
+        "roomKicked": (room: Room) => any;
+
+        "error": (code: number, reason: string) => any;
+    };
+
+    type SocketOnEvents = {
+        "identify": (token: string) => any;
+    }
+
     type IdPrefixes = "USR" | "ATH" | "MSG" | "ROM";
     type IdTypes = User["id"] | Attachment["id"] | Message["id"] | Room["id"];
 
@@ -37,7 +56,8 @@ declare global {
     type Room = {
         "id": `ROM-${number}`,
         "name": string,
-        "members": APIUser[]
+        "members": User["id"][],
+        "invitedUsers": User["id"][]
     };
 
     type Database = {

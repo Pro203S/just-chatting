@@ -1,4 +1,6 @@
-import "server-only";
+if (typeof window !== "undefined") {
+    throw new Error("server-only module");
+}
 
 import {
     SignJWT,

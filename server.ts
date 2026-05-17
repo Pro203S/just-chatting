@@ -1,10 +1,10 @@
 import { createServer } from "node:http";
 import next from "next";
-import { Server } from "socket.io";
 import c from 'chalk';
 import { internalIpV4 } from "internal-ip";
 import ora from "ora";
 import './src/modules/database';
+import Socket from "./socket";
 
 const start = new Date().getTime();
 const loading = ora("Starting...").start();
@@ -25,25 +25,7 @@ await app.prepare();
 
 const httpServer = createServer(handler);
 
-const io = new Server(httpServer, {
-    "path": "/socket",
-    "cors": {
-        "origin": "*",
-    },
-});
-
-io.on("connection", (socket) => {
-    console.log("connected:", socket.id);
-
-    socket.on("message", (data) => {
-        console.log("message:", data);
-        socket.emit("message", data);
-    });
-
-    socket.on("disconnect", () => {
-        console.log("disconnected:", socket.id);
-    });
-});
+new Socket(httpServer).run();
 
 httpServer.listen(port, hostname, () => {
     loading.succeed(`Server running on ` + c.green(`http://${hostname}:${port}`));

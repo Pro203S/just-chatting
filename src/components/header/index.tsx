@@ -10,7 +10,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDoorOpen, faUser } from '@fortawesome/free-solid-svg-icons';
 import { animated, easings, useTransition } from '@react-spring/web';
 
-export default function Header() {
+type Props = {
+    sessionOverride?: APIUser
+}
+
+export default function Header(props: Props) {
+    const { sessionOverride } = props;
     const router = useRouter();
     const [account, setAccount] = useState<APIUser>();
     const [menuOpen, setMenuOpen] = useState(false);
@@ -38,10 +43,15 @@ export default function Header() {
     useEffect(() => {
         (async () => {
             try {
-                const r = await REST<APIUser, APIError>("/api/auth/session");
-                if (!r.success) throw new Error(r.data.message);
+                if (!sessionOverride) {
+                    const r = await REST<APIUser, APIError>("/api/users/me");
+                    if (!r.success) throw new Error(r.data.message);
 
-                setAccount(r.data);
+                    setAccount(r.data);
+                    return;
+                }
+
+                setAccount(sessionOverride);
             } catch (err) {
                 const e = err as Error;
                 alert(e.message);
