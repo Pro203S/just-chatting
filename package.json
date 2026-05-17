@@ -3,8 +3,8 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "bun server.ts --webpack",
-        "dev:node": "ts-node server.ts --webpack",
+        "dev": "nodemon -w \"socket.ts\" -i database.json -i src -x \"bun server.ts --webpack\"",
+        "dev:node": "nodemon -w \"socket.ts\" -i database.json -i src -x \"ts-node server.ts --webpack\"",
         "build": "next build",
         "start": "NODE_ENV=production bun server.ts --webpack",
         "start:node": "NODE_ENV=production ts-node server.ts --webpack"
@@ -33,6 +33,7 @@
         "@types/react-dom": "^19",
         "eslint": "^9",
         "eslint-config-next": "16.2.6",
+        "nodemon": "^3.1.14",
         "typescript": "^5"
     },
     "ignoreScripts": [
