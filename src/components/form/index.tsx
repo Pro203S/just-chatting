@@ -77,6 +77,18 @@ export default function Form(props: Props) {
         setInputValuemap(createInputValueMap(inputs));
     }, [inputs]);
 
+    useEffect(() => {
+        const cb = ({ key }: KeyboardEvent) => {
+            if (key !== "Escape") return;
+
+            onCancel?.();
+        };
+
+        document.addEventListener("keydown", cb);
+
+        return () => document.removeEventListener("keydown", cb);
+    }, []);
+
     return <animated.div
         className={css.background}
         onClick={({ target, currentTarget }) => {

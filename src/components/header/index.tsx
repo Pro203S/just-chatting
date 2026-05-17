@@ -90,7 +90,7 @@ export default function Header(props: Props) {
                     if (!account) return <FontAwesomeIcon icon={faDoorOpen} />;
                     if (!account.profile) return <FontAwesomeIcon icon={faUser} />;
 
-                    return <img src={account.profile} alt={`${account.name} profile`} />
+                    return <img draggable={false} src={account.profile} alt={`${account.name} profile`} />
                 })()}
             </button>
 
