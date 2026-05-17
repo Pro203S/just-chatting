@@ -88,10 +88,14 @@ export default function Page() {
                 });
 
                 sock.on("identify", async () => {
-                    if (!localStorage.getItem("access_token")) {
-                        await refreshSession();
+                    try {
+                        if (!localStorage.getItem("access_token")) {
+                            await refreshSession();
+                        }
+                        sock.emit("identify", localStorage.getItem("access_token") ?? "");
+                    } catch {
+                        sock.disconnect();
                     }
-                    sock.emit("identify", localStorage.getItem("access_token") ?? "");
                 });
 
                 sock.on("roomCreate", (room) => setRooms(v => [
