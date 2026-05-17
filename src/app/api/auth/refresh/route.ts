@@ -10,13 +10,13 @@ export async function POST() {
         if (!refreshToken) return NextResponse.json({
             "code": "TOKEN_NOT_PROVIDED",
             "message": "다시 로그인 해주세요."
-        });
+        }, { "status": 401 });
 
         const payload = await verifyRefreshToken(refreshToken);
         if (!payload) return NextResponse.json({
             "code": "INVALID_TOKEN",
             "message": "다시 로그인 해주세요."
-        });
+        }, { "status": 401 });
 
         const { userId } = payload;
 
