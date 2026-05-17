@@ -51,6 +51,8 @@ export default class Socket {
                 const user = users.find(v => v.id === userId)?.value?.();
                 if (!user) return close(socket, 102, "다시 로그인 해주세요.");
 
+                clearTimeout(socketIdentifyTimeout[socket.id]);
+                delete socketIdentifyTimeout[socket.id];
                 socket.emit("welcome", {
                     "id": user.id,
                     "name": user.name,
