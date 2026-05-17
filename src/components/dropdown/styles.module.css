@@ -14,9 +14,8 @@
     flex-direction: column;
     min-width: max-content;
     padding: 8px;
-    border-radius: 15px;
-    border: #464646 solid .5px;
-    background-color: #2e2e2e;
+    border-radius: 16px;
+    border: #464646 solid .5px;background-color: #171717;
     box-shadow: 0 16px 32px rgba(0, 0, 0, .28);
     z-index: 200;
     will-change: transform, opacity;
