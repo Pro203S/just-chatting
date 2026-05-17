@@ -20,9 +20,11 @@ declare global {
         "messageEdit": (oldMsg: Message, newMsg: Message) => any;
 
         "roomCreate": (room: Room) => any;
+        "roomEdit": (oldRoom: Room, newRoom: Room) => any;
         "roomInvite": (room: Room) => any;
         "roomJoin": (room: Room) => any;
-        "roomKicked": (room: Room) => any;
+        "roomLeave": (room: Room, user: APIUser) => any;
+        "roomDelete": (room: Room) => any;
 
         "error": (code: number, reason: string) => any;
     };
