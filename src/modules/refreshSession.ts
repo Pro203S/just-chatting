@@ -2,7 +2,8 @@ import axios from "axios";
 
 export default async function refreshSession() {
     const r = await axios.post("/api/auth/refresh", {}, {
-        "withCredentials": true
+        "withCredentials": true,
+        "validateStatus": () => true
     });
     if (r.status !== 200) throw new Error(r.data.message);
 
