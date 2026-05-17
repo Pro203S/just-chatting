@@ -158,13 +158,15 @@ export default function Page() {
             return;
         }
         setRoom(room);
-        
+
         const r = await REST<APIUser[], APIError>(`/api/rooms/${room.id}/members`);
         if (!r.success) {
             alert("예기치 않은 오류가 발생했어요.");
             location.reload();
             return;
         }
+
+        setMembers(r.data.filter(v => v.id !== session?.id));
 
         socket.current.emit("joinRoom", id);
     };
@@ -364,9 +366,9 @@ export default function Page() {
                                                 setDialogOpen(true);
                                             }
                                         }))),
-                                        {
-                                            "type": "separator"
-                                        },
+                                        ...(members.length > 1 ? [{
+                                            "type": "separator" as const
+                                        }] : []),
                                         {
                                             "label": "초대하기",
                                             "onClick": () => {
