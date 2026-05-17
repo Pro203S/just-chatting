@@ -69,12 +69,6 @@
     text-align: left;
 }
 
-.chatting {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
 .blank {
     display: flex;
     flex-direction: column;
@@ -103,4 +97,73 @@
     font-size: 1.67rem;
     font-weight: 600;
     color: #fff;
+}
+
+.chatting {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: calc(100vw - (220px + 30px));
+}
+
+.roomHeader {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-bottom: .5px solid #464646;
+    width: 100%;
+}
+
+.roomHeader .roomInfo {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 5px;
+    padding: 7px;
+}
+
+.roomHeader .roomInfo .icon {
+    width: 36px;
+    height: 36px;
+    color: #fff;
+}
+
+.roomHeader .roomInfo .name {
+    font-size: 1.21rem;
+    color: #fff;
+    font-weight: 600;
+    text-align: left;
+    margin: auto 0;
+}
+
+.roomHeader .roomMenus {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    padding: 0 7px;
+}
+
+.roomHeader .roomMenus .button {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    border-radius: 50%;
+    will-change: background-color;
+    transition: background-color .2s ease;
+    cursor: pointer;
+    margin: auto 0;
+}
+
+.roomHeader .roomMenus .button:hover {
+    background-color: #464646;
+}
+
+.roomHeader .roomMenus .button svg {
+    width: 24px;
+    height: 24px;
+    color: #fff;
+    pointer-events: none;
 }

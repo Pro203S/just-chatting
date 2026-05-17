@@ -21,8 +21,8 @@ declare global {
 
         "roomCreate": (room: Room) => any;
         "roomEdit": (oldRoom: Room, newRoom: Room) => any;
-        "roomInvite": (room: Room) => any;
         "roomJoin": (room: Room) => any;
+        "roomKicked": (room: Room) => any;
         "roomLeave": (room: Room, user: APIUser) => any;
         "roomDelete": (room: Room) => any;
 

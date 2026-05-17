@@ -4,15 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import desktopCss from './desktop.module.css';
 import mobileCss from './mobile.module.css';
 import Header from "@/src/components/header";
-import Loading from '@/src/components/loading';
 import { useRouter } from 'next/navigation';
 import REST from '@/src/modules/rest';
 import { io, Socket } from 'socket.io-client';
 import refreshSession from '@/src/modules/refreshSession';
 import useWindowDimensions from '@/src/modules/useWindowDimensions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faPaperPlane, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faInfo, faPaperPlane, faPlus, faUsers } from '@fortawesome/free-solid-svg-icons';
 import Form from '@/src/components/form';
+import Dropdown from '@/src/components/dropdown';
+import Dialog, { DialogButton } from '@/src/components/dialog';
 
 export default function Page() {
     const router = useRouter();
@@ -36,6 +37,12 @@ export default function Page() {
     const [joinRoomShow, setJoinRoomShow] = useState(false);
     const [joinRoomLoading, setJoinRoomLoading] = useState(false);
     const [joinRoomError, setJoinRoomError] = useState<string>();
+
+    const [dialogTitle, setDialogTitle] = useState("");
+    const [dialogDesc, setDialogDesc] = useState("");
+    const [dialogButtons, setDialogButtons] = useState<DialogButton[]>([]);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogClosable, setDialogClosable] = useState(true);
 
     useEffect(() => {
         setCss(width > 650 ? desktopCss : mobileCss);
@@ -86,15 +93,24 @@ export default function Page() {
                     ...v
                 ]));
 
-                sock.on("roomJoin", (room) => setRooms(v => {
+                const editRoom = (room: Room) => setRooms(v => {
                     const index = v.findIndex(r => r.id === room.id);
                     if (index === -1) return v;
-                    
+
                     const arr = [...v];
                     arr[index] = room;
 
                     return arr;
-                }));
+                });
+
+                const deleteRoom = (room: Room) => setRooms(v => v.filter(r => r.id !== room.id));
+
+                sock.on("roomJoin", editRoom);
+                sock.on("roomEdit", editRoom);
+                sock.on("roomLeave", editRoom);
+
+                sock.on("roomKicked", deleteRoom);
+                sock.on("roomDelete", deleteRoom);
 
                 sock.connect();
 
@@ -129,7 +145,7 @@ export default function Page() {
         socket.current.emit("joinRoom", id);
     };
 
-    if (loading) return <Loading />;
+    if (loading) return null;
 
     return <>
         <Form
@@ -206,6 +222,16 @@ export default function Page() {
                 setJoinRoomShow(false);
             }}
         />
+        <Dialog
+            title={dialogTitle}
+            description={dialogDesc}
+            buttons={dialogButtons}
+            open={dialogOpen}
+            onCancel={() => {
+                if (!dialogClosable) return;
+                setDialogOpen(false);
+            }}
+        />
         <div className={css.container}>
             <Header sessionOverride={session} />
             <div className={css.screen}>
@@ -232,7 +258,7 @@ export default function Page() {
                             "backgroundColor": selectedRoom?.id === v.id ? "#464646" : undefined
                         }}
                     >
-                        <img src={v.icon} className={css.roomIcon} />
+                        <img draggable={false} src={v.icon} className={css.roomIcon} />
                         <div className={css.roomTexts}>
                             <span className={css.roomName}>{v.name}</span>
                             <span className={css.roomDesc}>채팅방 멤버 {v.members.length}명</span>
@@ -247,7 +273,58 @@ export default function Page() {
                         <span className={css.text}>왼쪽에서 채팅방을 선택해주세요.</span>
                     </div> :
                     <div className={css.chatting}>
+                        <div className={css.roomHeader}>
+                            <div className={css.roomInfo}>
+                                <img draggable={false} src={selectedRoom.icon} className={css.icon} />
+                                <span className={css.name}>{selectedRoom.name}</span>
+                            </div>
+                            <div className={css.roomMenus}>
+                                <Dropdown
+                                    containerClassName={css.button}
+                                    items={[
+                                        ...(selectedRoom.members.map(v => ({
+                                            "label": v.name,
+                                            "src": v.profile,
+                                            "onClick": () => {
+                                                setDialogTitle("유저 관리");
+                                                setDialogDesc("이 유저에 대해 수행할 작업을 선택해주세요.");
+                                                setDialogButtons([
+                                                    {
+                                                        "text": "취소",
+                                                        "onClick": () => setDialogOpen(false)
+                                                    },
+                                                    {
+                                                        "text": "강퇴",
+                                                        "onClick": async () => {
 
+                                                        }
+                                                    }
+                                                ]);
+                                                setDialogClosable(true);
+                                                setDialogOpen(true);
+                                            }
+                                        }))),
+                                        {
+                                            "type": "separator"
+                                        },
+                                        {
+                                            "label": "초대하기",
+                                            "onClick": () => {
+
+                                            }
+                                        }
+                                    ]}
+                                >
+                                    <FontAwesomeIcon
+                                        icon={faUsers}
+                                    />
+                                </Dropdown>
+                            </div>
+                        </div>
+                        <div className={css.messages}>
+                        </div>
+                        <div className={css.inputContainer}>
+                        </div>
                     </div>
                 }
             </div>
