@@ -6,13 +6,36 @@ import {
     type JWTPayload,
 } from "jose";
 
+function getRequiredEnv(name: keyof NodeJS.ProcessEnv): string {
+    const value = process.env[name]?.trim();
+    if (!value) {
+        throw new Error(`${name} env is required.`);
+    }
+
+    return value;
+}
+
+function getEnvSeconds(name: keyof NodeJS.ProcessEnv): number {
+    const value = getRequiredEnv(name).replace(/;$/, "");
+    const seconds = Number(value);
+
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+        throw new Error(`${name} env must be a positive number of seconds.`);
+    }
+
+    return seconds;
+}
+
 const accessSecret = new TextEncoder().encode(
-    process.env.JWT_ACCESS_SECRET,
+    getRequiredEnv("JWT_ACCESS_SECRET"),
 );
 
 const refreshSecret = new TextEncoder().encode(
-    process.env.JWT_REFRESH_SECRET,
+    getRequiredEnv("JWT_REFRESH_SECRET"),
 );
+
+export const ACCESS_TOKEN_EXPIRES_IN = getEnvSeconds("ACCESS_TOKEN_EXPIRES_IN");
+export const REFRESH_TOKEN_EXPIRES_IN = getEnvSeconds("REFRESH_TOKEN_EXPIRES_IN");
 
 export interface AccessTokenPayload extends JWTPayload {
     userId: IdTypes;
@@ -32,7 +55,7 @@ export async function createAccessToken(
             alg: "HS256",
         })
         .setIssuedAt()
-        .setExpirationTime(`${process.env.ACCESS_TOKEN_EXPIRES_IN}s`)
+        .setExpirationTime(`${ACCESS_TOKEN_EXPIRES_IN}s`)
         .sign(accessSecret);
 }
 
@@ -46,7 +69,7 @@ export async function createRefreshToken(
             alg: "HS256",
         })
         .setIssuedAt()
-        .setExpirationTime(`${process.env.REFRESH_TOKEN_EXPIRES_IN}s`)
+        .setExpirationTime(`${REFRESH_TOKEN_EXPIRES_IN}s`)
         .sign(refreshSecret);
 }
 

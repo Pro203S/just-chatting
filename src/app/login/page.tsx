@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import css from './page.module.css';
 import InOutAnimation from '@/src/components/InOutAnimation';
 import Link from 'next/link';
 import { animated, easings, useSpringValue } from '@react-spring/web';
+import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
-import { redirect } from 'next/navigation';
-import { isRedirectError } from 'next/dist/client/components/redirect-error';
 
-export default function Page() {
+function LoginPageContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
     const idRef = useRef<HTMLInputElement>(null);
     const pwRef = useRef<HTMLInputElement>(null);
-    const nameRef = useRef<HTMLInputElement>(null);
 
     const opacity = useSpringValue(1, {
         "config": {
@@ -35,12 +36,26 @@ export default function Page() {
         try {
             setControlDisabled(true);
 
-
-            redirect("/login");
-        } catch (err) {
-            if (isRedirectError(err)) {
-                throw err;
+            const r = await axios.post("/api/auth/login", {
+                "id": idRef.current?.value,
+                "pw": pwRef.current?.value
+            }, {
+                "validateStatus": () => true
+            });
+            if (r.status !== 200) {
+                alert(r.data.message);
+                return;
             }
+
+            const data: APIAuthLogin = r.data;
+            localStorage.setItem("access_token", data.access_token);
+            localStorage.setItem("expires_at", String(new Date().getTime() + (data.expires_in * 1000)));
+
+            const redirectTo = searchParams.get("redirectTo");
+            if (!redirectTo) return router.push("/");
+            if (!redirectTo.startsWith("/")) return router.push("/");
+            return router.push(redirectTo);
+        } catch (err) {
             const e = err as Error;
             alert(e.message);
         } finally {
@@ -67,11 +82,17 @@ export default function Page() {
                     <button className={css.primary} onClick={handleSignIn}>
                         <span>로그인</span>
                     </button>
-                    <Link href="/login" className={css.secondary}>
+                    <Link href="/register" className={css.secondary}>
                         <span>가입하기</span>
                     </Link>
                 </div>
             </div>
         </animated.div>
     </InOutAnimation>;
+}
+
+export default function Page() {
+    return <Suspense fallback={null}>
+        <LoginPageContent />
+    </Suspense>;
 }
