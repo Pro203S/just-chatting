@@ -26,6 +26,7 @@ export default function Page() {
     const [rooms, setRooms] = useState<Room[]>([]);
 
     const [selectedRoom, setSelectedRoom] = useState<Room>();
+    const [messages, setMessages] = useState<Message[]>([]);
 
     useEffect(() => {
         setCss(width > 650 ? desktopCss : mobileCss);
@@ -125,17 +126,17 @@ export default function Page() {
 
                 </button>)}
             </div>
-            {!selectedRoom ? <div className={css.blank}>
-                <div className={css.iconContainer}>
-                    <FontAwesomeIcon icon={faPaperPlane} className={css.icon} />
-                </div>
-                <span className={css.text}>왼쪽에서 채팅방을 선택해주세요.</span>
-            </div> : <>
+            {!selectedRoom ?
+                <div className={css.blank}>
+                    <div className={css.iconContainer}>
+                        <FontAwesomeIcon icon={faPaperPlane} className={css.icon} />
+                    </div>
+                    <span className={css.text}>왼쪽에서 채팅방을 선택해주세요.</span>
+                </div> :
                 <div className={css.chatting}>
 
                 </div>
-            </>}
-
+            }
         </div>
     </div>;
 }
