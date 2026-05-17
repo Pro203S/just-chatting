@@ -67,7 +67,7 @@ export async function DELETE(req: NextRequest, { params }: {
         if (id !== "me") return NextResponse.json({
             "message": "본인이 아닌 유저는 삭제할 수 없습니다."
         }, { "status": 400 });
-        
+
         const token = req.headers.get("authorization");
         if (!token) return NextResponse.json({
             "code": "TOKEN_NOT_PROVIDED",
@@ -85,30 +85,20 @@ export async function DELETE(req: NextRequest, { params }: {
         const database = getDatabase();
         const users = database.get("users");
 
-        const user = users.find(v => v.id === userId)?.value?.();
+        const user = users.find(v => v.id === userId);
         if (!user) return NextResponse.json({
             "code": "USER_NOT_FOUND",
             "message": "다시 가입해주세요."
         }, { "status": 403 });
 
-        if (id === "me") return NextResponse.json({
-            "id": user.id,
-            "userId": user.userId,
-            "name": user.name,
-            "profile": user.profile
-        }, { "status": 200 });
-
-        const foundUser = users.find(v => v.id === id)?.value?.();
-        if (!foundUser) return NextResponse.json({
-            "message": "사용자를 찾을 수 없습니다."
+        const index = users.findIndex(v => v.id === user.get("id").value());
+        if (index === -1) return NextResponse.json({
+            "message": "asdf"
         }, { "status": 404 });
 
-        return NextResponse.json({
-            "id": foundUser.id,
-            "userId": foundUser.userId,
-            "name": foundUser.name,
-            "profile": foundUser.profile
-        }, { "status": 200 });
+        users.remove(index);
+
+        return new Response(null, { "status": 204 });
     } catch (err) {
         const e = err as Error;
         return NextResponse.json({
@@ -133,41 +123,50 @@ export async function PUT(req: NextRequest, { params }: {
             "message": "본인이 아닌 유저는 수정할 수 없습니다."
         }, { "status": 400 });
 
-        const { id, pw, name, profile }: Partial<Body> = await req.json();
+        const token = req.headers.get("authorization");
+        if (!token) return NextResponse.json({
+            "code": "TOKEN_NOT_PROVIDED",
+            "message": "로그인해주세요."
+        }, { "status": 401 });
 
-        if (id && typeof id !== "string") return NextResponse.json({
-            "message": "예기치 않은 오류에요."
-        }, { "status": 415 });
+        const payload = await verifyAccessToken(token);
+        if (!payload) return NextResponse.json({
+            "code": "INVALID_TOKEN",
+            "message": "다시 로그인 해주세요."
+        }, { "status": 401 });
+
+        const { userId } = payload;
+
+        const { pw, name, profile }: Partial<Body> = await req.json();
 
         if (pw && typeof pw !== "string") return NextResponse.json({
             "message": "예기치 않은 오류에요."
         }, { "status": 415 });
 
-        if (pw && pw.length < 8) return NextResponse.json({
-            "message": "비밀번호는 8글자 이상이여야해요."
-        }, { "status": 400 });
-
         if (name && typeof name !== "string") return NextResponse.json({
             "message": "예기치 않은 오류에요."
         }, { "status": 415 });
-        
+
         if (profile && typeof profile !== "string") return NextResponse.json({
             "message": "예기치 않은 오류에요."
         }, { "status": 415 });
 
         const users = getDatabase().get("users");
-        const user = users.find(v => v.userId === id);
+        const user = users.find(v => v.id === userId);
         if (!user) return NextResponse.json({
             "code": "USER_NOT_FOUND",
-            "message": "유저를 찾을 수 없어요."
+            "message": "다시 가입해주세요."
         }, { "status": 403 });
 
-        if (id) user.get("userId").set(id);
-        if (pw) user.get("password").set(await hashPassword(pw));
+        if (pw && pw.length >= 8) user.get("password").set(await hashPassword(pw));
         if (name) user.get("name").set(name);
         if (profile) user.get("profile").set(profile);
 
-        return new Response(null, { "status": 204 });
+        return NextResponse.json({
+            "password": pw && pw.length >= 8,
+            "name": Boolean(name),
+            "profile": Boolean(profile)
+        });
     } catch (err) {
         const e = err as Error;
         return NextResponse.json({

@@ -1,7 +1,6 @@
 import { findSocketServer } from "@/socket";
 import { getDatabase } from "@/src/modules/database";
 import generateId from "@/src/modules/generateId";
-import removePwd from "@/src/modules/removePwd";
 import { verifyAccessToken } from "@/src/modules/token";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -31,7 +30,7 @@ export async function GET(req: NextRequest) {
         }, { "status": 403 });
 
         const rooms = database.get("rooms");
-        const rawFoundRooms = rooms.findAll(v => v.members.map(v => v.id).includes(user.id));
+        const rawFoundRooms = rooms.findAll(v => v.members.includes(user.id));
         const foundRooms = rawFoundRooms.map(v => v.value());
         return NextResponse.json(foundRooms, {
             "status": 200
@@ -75,7 +74,7 @@ export async function POST(req: NextRequest) {
         const room: Room = {
             "id": generateId("ROM"),
             "invitedUsers": [],
-            "members": [user],
+            "members": [user.id],
             "name": name ?? `${user.name}님의 방`,
             "icon": user.profile,
             "owner": user.id
@@ -133,7 +132,7 @@ export async function PUT(req: NextRequest) {
         }, { "status": 403 });
 
         room.get("invitedUsers").set(roomValue.invitedUsers.filter(v => v !== user.id));
-        room.get("members").add(removePwd(user));
+        room.get("members").add(user.id);
 
         const io = findSocketServer();
         io?.to(`user:${user.id}`).emit("roomCreate", roomValue);

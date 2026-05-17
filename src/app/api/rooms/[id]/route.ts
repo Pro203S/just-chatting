@@ -203,6 +203,8 @@ export async function DELETE(req: NextRequest, { params }: {
         const io = getSocketServer();
         io?.to(`room:${room.value().id}`).emit("roomDelete", room.value());
 
+        rooms.remove(rooms.findIndex(v => v.id === room.value().id));
+
         return new Response(null, { "status": 204 });
     } catch (err) {
         const e = err as Error;
