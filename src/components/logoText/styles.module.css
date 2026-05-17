@@ -1,0 +1,19 @@
+.logoText {
+    font-family: 'continuous';
+    color: #fff;
+    font-size: 2.67rem;
+    user-select: none;
+}
+
+.logoRedirect {
+    font-family: 'continuous';
+    color: #fff;
+    font-size: 2.67rem;
+    user-select: none;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.logoRedirect:hover {
+    text-decoration: underline;
+}
