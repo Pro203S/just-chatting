@@ -1,4 +1,5 @@
 import { animated, AnimatedProps } from "@react-spring/web";
+import Link from "next/link";
 import { CSSProperties } from "react";
 
 type SpanProps = React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>;
@@ -15,12 +16,24 @@ const AnimatedLogo = animated(LogoText);
 
 export default function LogoText(props: Props) {
     return <span style={{
-        ...props.style,
         "fontFamily": "continuous",
         "color": "white",
         "fontSize": "2.67rem",
-        "userSelect": "none"
+        "userSelect": "none",
+        ...props.style,
     }}>Just Chatting</span>;
+}
+
+export function LogoRedirect(props: Props) {
+    return <Link href="/" style={{
+        "fontFamily": "continuous",
+        "color": "white",
+        "fontSize": "2.67rem",
+        "userSelect": "none",
+        "textDecoration": "none",
+        "cursor": "pointer",
+        ...props.style,
+    }}>Just Chatting</Link>;
 }
 
 export function AnimatedLogoText(props: AnimatedLogoProps) {
