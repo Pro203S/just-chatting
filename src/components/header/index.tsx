@@ -68,16 +68,6 @@ export default function Header() {
             "margin": "auto 0"
         }} />
 
-        <div className={css.linearH}>
-            <Link href="/users">
-                <span>친구 찾기</span>
-            </Link>
-
-            <Link href="/rooms">
-                <span>채팅방 목록</span>
-            </Link>
-        </div>
-
         <div className={css.profileArea} ref={profileAreaRef}>
             <button
                 className={css.profile}
