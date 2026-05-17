@@ -10,6 +10,8 @@ import REST from '@/src/modules/rest';
 import { io, Socket } from 'socket.io-client';
 import refreshSession from '@/src/modules/refreshSession';
 import useWindowDimensions from '@/src/modules/useWindowDimensions';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft, faPaperPlane, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 export default function Page() {
     const router = useRouter();
@@ -22,6 +24,8 @@ export default function Page() {
     const [loading, setLoading] = useState(true);
     const [session, setSession] = useState<APIUser>();
     const [rooms, setRooms] = useState<Room[]>([]);
+
+    const [selectedRoom, setSelectedRoom] = useState<Room>();
 
     useEffect(() => {
         setCss(width > 650 ? desktopCss : mobileCss);
@@ -57,7 +61,6 @@ export default function Page() {
                 });
 
                 sock.on("disconnect", () => {
-                    alert("예기치 않은 이유로 연결이 종료되었습니다.");
                     return router.replace("/");
                 });
 
@@ -80,7 +83,7 @@ export default function Page() {
                     alert(r.data.message);
                     return router.replace("/");
                 }
-                
+
                 setRooms(r.data);
             } catch (err) {
                 const e = err as Error;
@@ -90,17 +93,49 @@ export default function Page() {
         })();
     }, []);
 
+    const handleRoomClick = async (id: Room["id"]) => {
+        console.log(id);
+    };
+
     if (loading) return <Loading />;
 
     return <div className={css.container}>
         <Header sessionOverride={session} />
         <div className={css.screen}>
             <div className={css.rooms}>
+                <button className={css.room}>
+                    <FontAwesomeIcon icon={faPlus} className={css.roomIcon} />
+                    <div className={css.roomTexts}>
+                        <span className={css.roomName}>방 만들기</span>
+                        <span className={css.roomDesc}>여기를 클릭해 방을 만들어요.</span>
+                    </div>
+                </button>
+                <button className={css.room}>
+                    <FontAwesomeIcon icon={faArrowLeft} className={css.roomIcon} />
+                    <div className={css.roomTexts}>
+                        <span className={css.roomName}>방에 입장하기</span>
+                        <span className={css.roomDesc}>이미 방 코드가 있으신가요?</span>
+                    </div>
+                </button>
+                {rooms.map(v => <button
+                    key={v.id}
+                    className={css.room}
+                    onClick={() => handleRoomClick(v.id)}
+                >
 
+                </button>)}
             </div>
-            <div className={css.chatting}>
+            {!selectedRoom ? <div className={css.blank}>
+                <div className={css.iconContainer}>
+                    <FontAwesomeIcon icon={faPaperPlane} className={css.icon} />
+                </div>
+                <span className={css.text}>왼쪽에서 채팅방을 선택해주세요.</span>
+            </div> : <>
+                <div className={css.chatting}>
 
-            </div>
+                </div>
+            </>}
+
         </div>
     </div>;
 }
