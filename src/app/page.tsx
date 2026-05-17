@@ -17,7 +17,7 @@ export default function Page() {
     useEffect(() => {
         (async () => {
             if (localStorage.getItem("access_token")) {
-                return router.replace("/rooms");
+                return router.replace("/chats");
             }
             setAnimate1(true);
             await new Promise(r => setTimeout(r, 150));

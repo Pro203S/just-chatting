@@ -9,4 +9,5 @@
 .screen {
     display: flex;
     flex-direction: row;
+    border-top: #464646 solid .5px;
 }
