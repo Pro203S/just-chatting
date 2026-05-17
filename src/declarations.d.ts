@@ -17,6 +17,7 @@ declare global {
         "messageDelete": (message: Message) => any;
         "messageEdit": (oldMsg: Message, newMsg: Message) => any;
 
+        "roomCreate": (room: Room) => any;
         "roomInvite": (room: Room) => any;
         "roomJoin": (room: Room) => any;
         "roomKicked": (room: Room) => any;

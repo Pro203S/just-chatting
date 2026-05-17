@@ -74,6 +74,7 @@ export function initSocketServer(httpServer: HttpServer) {
                 return close(socket, 102, "다시 로그인 해주세요.");
             }
 
+            await socket.join(`user:${user.id}`);
             socket.emit("welcome", {
                 id: user.id,
                 name: user.name,
