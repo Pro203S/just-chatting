@@ -1,6 +1,7 @@
 import { findSocketServer } from "@/socket";
 import { getDatabase } from "@/src/modules/database";
 import generateId from "@/src/modules/generateId";
+import removePwd from "@/src/modules/removePwd";
 import { verifyAccessToken } from "@/src/modules/token";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
     try {
-        const { name }: { name: string } = await req.json();
+        const { id }: { id: string } = await req.json();
 
         const token = req.headers.get("authorization");
         if (!token) return NextResponse.json({
@@ -120,13 +121,24 @@ export async function PUT(req: NextRequest) {
         }, { "status": 403 });
 
         const rooms = database.get("rooms");
-        rooms.add({
-            "id": generateId("ROM"),
-            "invitedUsers": [],
-            "members": [user],
-            "name": name ?? `${user.name}님의 방`,
-            "icon": user.profile
-        });
+        const room = rooms.find(v => v.id === id);
+        if (!room) return NextResponse.json({
+            "message": "방을 찾을 수 없습니다."
+        }, { "status": 404 });
+
+        const roomValue = room.value();
+        if (!roomValue.invitedUsers.includes(user.id)) return NextResponse.json({
+            "message": "방에 초대되지 않았습니다."
+        }, { "status": 403 });
+
+        room.get("invitedUsers").set(roomValue.invitedUsers.filter(v => v !== user.id));
+        room.get("members").add(removePwd(user));
+
+        const io = findSocketServer();
+        io?.to(`user:${user.id}`).emit("roomCreate", roomValue);
+        io?.to(`room:${roomValue.id}`).emit("roomJoin", roomValue);
+
+        io?.to(`user:${user.id}`).socketsJoin(`room:${roomValue.id}`);
 
         return new Response(null, { "status": 204 });
     } catch (err) {

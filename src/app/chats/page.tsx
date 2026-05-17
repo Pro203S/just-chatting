@@ -33,6 +33,10 @@ export default function Page() {
     const [createRoomLoading, setCreateRoomLoading] = useState(false);
     const [createRoomError, setCreateRoomError] = useState<string>();
 
+    const [joinRoomShow, setJoinRoomShow] = useState(false);
+    const [joinRoomLoading, setJoinRoomLoading] = useState(false);
+    const [joinRoomError, setJoinRoomError] = useState<string>();
+
     useEffect(() => {
         setCss(width > 650 ? desktopCss : mobileCss);
     }, [width]);
@@ -82,6 +86,16 @@ export default function Page() {
                     ...v
                 ]));
 
+                sock.on("roomJoin", (room) => setRooms(v => {
+                    const index = v.findIndex(r => r.id === room.id);
+                    if (index === -1) return v;
+                    
+                    const arr = [...v];
+                    arr[index] = room;
+
+                    return arr;
+                }));
+
                 sock.connect();
 
                 const session: APIUser = await new Promise<APIUser>((resolve) => sock.once("welcome", resolve));
@@ -105,7 +119,14 @@ export default function Page() {
     }, []);
 
     const handleRoomClick = async (id: Room["id"]) => {
-        console.log(id);
+        if (!socket.current) {
+            alert("서버와의 연결이 끊겼어요.");
+            location.reload();
+            return;
+        }
+        setSelectedRoom(rooms.find(v => v.id === id));
+
+        socket.current.emit("joinRoom", id);
     };
 
     if (loading) return <Loading />;
@@ -148,6 +169,43 @@ export default function Page() {
                 setCreateRoomShow(false);
             }}
         />
+        <Form
+            title="방 입장하기"
+            description="채팅방에 입장해요."
+            error={joinRoomError}
+            disabled={joinRoomLoading}
+            inputs={[{
+                "id": "id",
+                "placeholder": "방 코드",
+                "name": "방 코드"
+            }]}
+            showForm={joinRoomShow}
+            onSubmit={async (data: { "id": string }) => {
+                const { id } = data;
+                if (!id) return setJoinRoomError("방 코드를 입력해주세요!");
+
+                setJoinRoomLoading(true);
+
+                const r = await REST<null, APIError>("/api/rooms", {
+                    "method": "PUT",
+                    "data": {
+                        id
+                    }
+                });
+                if (!r.success) {
+                    setJoinRoomError(r.data.message);
+                    setJoinRoomLoading(false);
+                    return;
+                }
+
+                setJoinRoomShow(false);
+            }}
+            submitText={"입장하기"}
+            onCancel={() => {
+                setJoinRoomError(undefined);
+                setJoinRoomShow(false);
+            }}
+        />
         <div className={css.container}>
             <Header sessionOverride={session} />
             <div className={css.screen}>
@@ -159,7 +217,7 @@ export default function Page() {
                             <span className={css.roomDesc}>여기를 클릭해 방을 만들어요.</span>
                         </div>
                     </button>
-                    <button className={css.room}>
+                    <button className={css.room} onClick={() => setJoinRoomShow(true)}>
                         <FontAwesomeIcon icon={faArrowLeft} className={css.roomIcon} />
                         <div className={css.roomTexts}>
                             <span className={css.roomName}>방에 입장하기</span>
@@ -171,7 +229,7 @@ export default function Page() {
                         className={css.room}
                         onClick={() => handleRoomClick(v.id)}
                         style={{
-                            "backgroundColor": 
+                            "backgroundColor": selectedRoom?.id === v.id ? "#464646" : undefined
                         }}
                     >
                         <img src={v.icon} className={css.roomIcon} />

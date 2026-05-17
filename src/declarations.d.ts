@@ -13,6 +13,8 @@ declare global {
         "identify": () => any;
         "welcome": (session: APIUser) => any;
 
+        "inputing": (user: APIUser) => any;
+
         "messageCreate": (message: Message) => any;
         "messageDelete": (message: Message) => any;
         "messageEdit": (oldMsg: Message, newMsg: Message) => any;

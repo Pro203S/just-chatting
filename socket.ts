@@ -100,6 +100,14 @@ export function initSocketServer(httpServer: HttpServer) {
             });
         });
 
+        socket.on("joinRoom", async (roomId) => {
+            for (const room of socket.rooms) {
+                if (!room.startsWith("room:")) continue;
+                socket.leave(room);
+            }
+            socket.join(`room:${roomId}`);
+        });
+
         socket.on("disconnect", (reason) => {
             clearTimeout(identifyTimeout);
             console.log("Socket Disconnected:", socket.id, reason);
