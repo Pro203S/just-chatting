@@ -1,18 +1,24 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import LogoText from '../components/LogoText';
+import LogoText from '../components/logoText';
 import css from './page.module.css';
 import Link from 'next/link';
 import InOutAnimation from '../components/InOutAnimation';
+import { useRouter } from 'next/navigation';
 
 export default function Page() {
+    const router = useRouter();
+
     const [animate1, setAnimate1] = useState(false);
     const [animate2, setAnimate2] = useState(false);
     const [animate3, setAnimate3] = useState(false);
 
     useEffect(() => {
         (async () => {
+            if (localStorage.getItem("access_token")) {
+                return router.replace("/rooms");
+            }
             setAnimate1(true);
             await new Promise(r => setTimeout(r, 150));
             setAnimate2(true);
