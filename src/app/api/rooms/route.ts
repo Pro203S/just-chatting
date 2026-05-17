@@ -1,4 +1,5 @@
 import { getDatabase } from "@/src/modules/database";
+import generateId from "@/src/modules/generateId";
 import { verifyAccessToken } from "@/src/modules/token";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -69,11 +70,14 @@ export async function POST(req: NextRequest) {
         }, { "status": 403 });
 
         const rooms = database.get("rooms");
-        const rawFoundRooms = rooms.findAll(v => v.members.includes(user.id));
-        const foundRooms = rawFoundRooms.map(v => v.value());
-        return NextResponse.json(foundRooms, {
-            "status": 200
+        rooms.add({
+            "id": generateId("ROM"),
+            "invitedUsers": [],
+            "members": [user.id],
+            "name": name ?? `${user.name}님의 방`
         });
+
+        return new Response(null, { "status": 204 });
     } catch (err) {
         const e = err as Error;
         return NextResponse.json({
