@@ -4,7 +4,7 @@ import c from 'chalk';
 import { internalIpV4 } from "internal-ip";
 import ora from "ora";
 import './src/modules/database';
-import Socket from "./socket";
+import { initSocketServer } from "./socket";
 
 const start = new Date().getTime();
 const loading = ora("Starting...").start();
@@ -25,7 +25,7 @@ await app.prepare();
 
 const httpServer = createServer(handler);
 
-new Socket(httpServer).run();
+initSocketServer(httpServer);
 
 httpServer.listen(port, hostname, () => {
     loading.succeed(`Server running on ` + c.green(`http://${hostname}:${port}`));

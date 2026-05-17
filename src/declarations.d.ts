@@ -29,6 +29,11 @@ declare global {
         "joinRoom": (roomId: `ROM-${number}`) => any;
     }
 
+    // 언젠간 쓸모가 있지 않을까
+    type SocketData = {
+        [key: string]: any
+    };
+
     type IdPrefixes = "USR" | "ATH" | "MSG" | "ROM";
     type IdTypes = User["id"] | Attachment["id"] | Message["id"] | Room["id"];
 
