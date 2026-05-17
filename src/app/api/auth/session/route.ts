@@ -1,0 +1,42 @@
+import { getDatabase } from "@/src/modules/database";
+import { verifyAccessToken } from "@/src/modules/token";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(req: NextRequest) {
+    try {
+        const token = req.headers.get("authorization");
+        if (!token) return NextResponse.json({
+            "code": "TOKEN_NOT_PROVIDED",
+            "message": "로그인해주세요."
+        }, { "status": 401 });
+
+        const payload = await verifyAccessToken(token);
+        if (!payload) return NextResponse.json({
+            "code": "INVALID_TOKEN",
+            "message": "다시 로그인 해주세요."
+        }, { "status": 401 });
+
+        const { userId } = payload;
+
+        const database = getDatabase();
+        const users = database.get("users");
+        
+        const user = users.find(v => v.id === userId)?.value?.();
+        if (!user) return NextResponse.json({
+            "code": "USER_NOT_FOUND",
+            "message": "유저를 찾을 수 없습니다."
+        }, { "status": 403 });
+
+        return NextResponse.json({
+            "id": user.id,
+            "userId": user.userId,
+            "name": user.name,
+            "profile": user.profile
+        }, { "status": 200 });
+    } catch (err) {
+        const e = err as Error;
+        return NextResponse.json({
+            "message": e.message
+        }, { "status": 500 });
+    }
+}
