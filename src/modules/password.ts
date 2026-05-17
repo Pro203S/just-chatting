@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 import argon2 from "argon2";
 
 export async function hashPassword(password: string) {
@@ -13,7 +13,7 @@ export async function hashPassword(password: string) {
 export async function verifyPassword(
     hashedPassword: string,
     password: string,
-) {
+): Promise<boolean> {
     return await argon2.verify(
         hashedPassword,
         password,
