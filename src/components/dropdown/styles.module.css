@@ -57,6 +57,7 @@
     height: 18px;
     object-fit: cover;
     flex-shrink: 0;
+    border-radius: 50%;
 }
 
 .itemLabel {

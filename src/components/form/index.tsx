@@ -123,7 +123,7 @@ export default function Form(props: Props) {
         >
             <div className={css.texts}>
                 <span className={css.title}>{title}</span>
-                <span className={css.description}>{description}</span>
+                {description.split("\n").map(v => <span className={css.description} key={v}>{v}</span>)}
                 {error && <span className={css.error}>{error}</span>}
             </div>
             <div className={css.inputs}>
