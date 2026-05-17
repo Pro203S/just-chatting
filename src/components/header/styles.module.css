@@ -10,23 +10,6 @@
     height: 50px;
 }
 
-.linearH {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-}
-
-.linearH a {
-    text-decoration: none;
-    cursor: pointer;
-    color: #fff;
-    margin: auto 0;
-}
-
-.linearH a:hover {
-    text-decoration: underline;
-}
-
 .profileArea {
     position: relative;
     margin: auto 0;
