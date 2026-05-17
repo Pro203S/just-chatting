@@ -69,6 +69,9 @@ export default function Page() {
                     alert(reason);
 
                     if (Math.floor(code / 100) === 1) {
+                        localStorage.removeItem("access_token");
+                        localStorage.removeItem("expires_in");
+
                         router.push("/login");
                         return;
                     }
@@ -78,7 +81,10 @@ export default function Page() {
                 });
 
                 sock.on("disconnect", () => {
-                    return router.replace("/");
+                    localStorage.removeItem("access_token");
+                    localStorage.removeItem("expires_in");
+
+                    return router.replace("/login");
                 });
 
                 sock.on("identify", async () => {
@@ -287,7 +293,7 @@ export default function Page() {
                                             "src": v.profile,
                                             "onClick": () => {
                                                 setDialogTitle("유저 관리");
-                                                setDialogDesc("이 유저에 대해 수행할 작업을 선택해주세요.");
+                                                setDialogDesc(v.name + "\n이 유저에 대해 수행할 작업을 선택해주세요.");
                                                 setDialogButtons([
                                                     {
                                                         "text": "취소",
