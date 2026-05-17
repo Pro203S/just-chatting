@@ -149,7 +149,10 @@ export default function Page() {
                     setCurrentRoom(v => v?.id === room.id ? room : v);
                 };
 
-                const deleteRoom = (room: Room) => setCurrentRooms(v => v.filter(r => r.id !== room.id));
+                const deleteRoom = (room: Room) => {
+                    setCurrentRoom(undefined);
+                    setCurrentRooms(v => v.filter(r => r.id !== room.id));
+                }
 
                 sock.on("roomJoin", async (room) => {
                     editRoom(room);
@@ -558,6 +561,23 @@ export default function Page() {
                                                                 "method": "DELETE",
                                                                 "params": {
                                                                     "target": v.id
+                                                                }
+                                                            });
+                                                            if (!r.success) {
+                                                                alert(r.data.message);
+                                                                return;
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "text": "소유권 넘기기",
+                                                        "onClick": async () => {
+                                                            setDialogOpen(false);
+
+                                                            const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}`, {
+                                                                "method": "PUT",
+                                                                "data": {
+                                                                    "owner": v.id
                                                                 }
                                                             });
                                                             if (!r.success) {
