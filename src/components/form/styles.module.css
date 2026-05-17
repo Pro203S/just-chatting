@@ -1,0 +1,92 @@
+.background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99;
+}
+
+.dialog {
+    position: fixed;
+    padding: 15px;
+    background-color: #2e2e2e;
+    border: #464646 solid .5px;
+    border-radius: 15px;
+    z-index: 100;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.texts {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.texts .title {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.67rem;
+    margin: 0 auto;
+}
+
+.texts .description {
+    color: #fff;
+    font-weight: 400;
+    font-size: 1rem;
+    margin: 0 auto;
+}
+
+.texts .error {
+    color: #f81010;
+    font-weight: 400;
+    font-size: 1rem;
+    margin: 0 auto;
+}
+
+.button {
+    display: flex;
+    padding: 7px;
+    background-color: #010101;
+    border-radius: 15px;
+    transition: .25s;
+    cursor: pointer;
+    border: #000 solid 0px;
+    text-decoration: none;
+    margin: 0 auto;
+}
+
+.button span {
+    font-size: 1rem;
+    color: #fff;
+}
+
+.button:hover {
+    filter: invert(100%);
+}
+
+.inputBox {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputBox .label {
+    color: #fff;
+    font-size: 1rem;
+    padding: 0 2px;
+}
+
+.inputBox input {
+    border: #000 solid 0px;
+    outline: none;
+    background-color: transparent;
+    border-bottom: #464646 solid 1px;
+    color: #fff;
+    font-size: 15px;
+}
