@@ -75,8 +75,13 @@ export default function Page() {
                 setSession(session);
                 setLoading(false);
 
-                const r = await REST("/api/rooms");
+                const r = await REST<Room[], APIError>("/api/rooms");
+                if (!r.success) {
+                    alert(r.data.message);
+                    return router.replace("/");
+                }
                 
+                setRooms(r.data);
             } catch (err) {
                 const e = err as Error;
                 alert(e.message);

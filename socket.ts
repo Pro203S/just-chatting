@@ -11,8 +11,6 @@ function close(socket: SocketIOType<SocketOnEvents, SocketEmitEvents>, code: num
 const socketIdentifyTimeout: Record<string, NodeJS.Timeout> = {};
 
 export default class Socket {
-    private _socket!: Server<SocketOnEvents, SocketEmitEvents>;
-
     constructor(
         private _httpServer: HttpServer
     ) { }
@@ -24,7 +22,6 @@ export default class Socket {
                 "origin": "*",
             },
         });
-        this._socket = io;
 
         io.on("connection", async (socket) => {
             console.log("  Socket Connected: " + socket.id);

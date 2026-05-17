@@ -26,6 +26,7 @@ declare global {
 
     type SocketOnEvents = {
         "identify": (token: string) => any;
+        "joinRoom": (roomId: `ROM-${number}`) => any;
     }
 
     type IdPrefixes = "USR" | "ATH" | "MSG" | "ROM";
