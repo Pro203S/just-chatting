@@ -1,5 +1,5 @@
 import { randomInt } from "crypto";
-import { Database } from "./database";
+import { getDatabase } from "./database";
 
 const HasDuplicate = (array: { "id": string }[], id: IdTypes) => array.map(v => v.id).includes(id);
 
@@ -7,6 +7,8 @@ export default function generateId<T extends IdPrefixes>(type: T): `${T}-${numbe
     const id: IdTypes = `${type}-${randomInt(2147483647)}`;
 
     let dup = false;
+
+    const Database = getDatabase();
 
     switch (type) {
         case "USR":

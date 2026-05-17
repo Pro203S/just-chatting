@@ -12,4 +12,4 @@ if (!fs.existsSync(DB_PATH)) {
     }), "utf-8");
 }
 
-export const Database = new Shadowly<Database>(DB_PATH);
+export const getDatabase = () => new Shadowly<Database>(DB_PATH);
