@@ -3,11 +3,11 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "bun server.ts",
-        "dev:node": "ts-node server.ts",
+        "dev": "bun server.ts --webpack",
+        "dev:node": "ts-node server.ts --webpack",
         "build": "next build",
-        "start": "NODE_ENV=production bun server.ts",
-        "start:node": "NODE_ENV=production ts-node server.ts"
+        "start": "NODE_ENV=production bun server.ts --webpack",
+        "start:node": "NODE_ENV=production ts-node server.ts --webpack"
     },
     "dependencies": {
         "@fortawesome/fontawesome-svg-core": "^7.2.0",
