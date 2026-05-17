@@ -26,7 +26,7 @@ export async function POST() {
         const user = users.find(v => v.id === userId)?.value?.();
         if (!user) return NextResponse.json({
             "code": "USER_NOT_FOUND",
-            "message": "유저를 찾을 수 없습니다."
+            "message": "다시 가입해주세요."
         }, { "status": 403 });
 
         cookie.set("refresh_token", await createRefreshToken(user.id), {

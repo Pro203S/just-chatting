@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: {
         const user = users.find(v => v.id === userId)?.value?.();
         if (!user) return NextResponse.json({
             "code": "USER_NOT_FOUND",
-            "message": "유저를 찾을 수 없습니다."
+            "message": "다시 가입해주세요."
         }, { "status": 403 });
 
         const { id } = await params;
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest, { params }: {
 
         const foundUser = users.find(v => v.id === id)?.value?.();
         if (!foundUser) return NextResponse.json({
-            "message": "유저를 찾을 수 없습니다."
+            "message": "사용자를 찾을 수 없습니다."
         }, { "status": 404 });
 
         return NextResponse.json({
@@ -88,7 +88,7 @@ export async function DELETE(req: NextRequest, { params }: {
         const user = users.find(v => v.id === userId)?.value?.();
         if (!user) return NextResponse.json({
             "code": "USER_NOT_FOUND",
-            "message": "유저를 찾을 수 없습니다."
+            "message": "다시 가입해주세요."
         }, { "status": 403 });
 
         if (id === "me") return NextResponse.json({
@@ -100,7 +100,7 @@ export async function DELETE(req: NextRequest, { params }: {
 
         const foundUser = users.find(v => v.id === id)?.value?.();
         if (!foundUser) return NextResponse.json({
-            "message": "유저를 찾을 수 없습니다."
+            "message": "사용자를 찾을 수 없습니다."
         }, { "status": 404 });
 
         return NextResponse.json({
