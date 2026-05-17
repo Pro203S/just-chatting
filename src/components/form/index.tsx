@@ -51,20 +51,30 @@ export default function Form(props: Props) {
 
     const [inputValueMap, setInputValuemap] = useState<Record<string, string>>(() => createInputValueMap(inputs));
 
+    const [displayNone, setDisplayNone] = useState(true);
+
     useEffect(() => {
-        if (showForm) {
-            bgOpacity.start(1);
-            bgBlur.start(5);
+        (async () => {
+            if (showForm) {
+                setDisplayNone(false);
+                await Promise.all([
+                    bgOpacity.start(1),
+                    bgBlur.start(5),
 
-            dialogOpacity.start(1);
-            dialogY.start(0);
-        } else {
-            bgOpacity.start(0);
-            bgBlur.start(0);
+                    dialogOpacity.start(1),
+                    dialogY.start(0)
+                ]);
+            } else {
+                await Promise.all([
+                    bgOpacity.start(0),
+                    bgBlur.start(0),
 
-            dialogOpacity.start(0);
-            dialogY.start(10);
-        }
+                    dialogOpacity.start(0),
+                    dialogY.start(10)
+                ]);
+                setDisplayNone(true);
+            }
+        })();
     }, [showForm]);
 
     useEffect(() => {
@@ -100,7 +110,8 @@ export default function Form(props: Props) {
         style={{
             "pointerEvents": showForm ? "auto" : "none",
             "backdropFilter": bgBlur.to(v => `blur(${v}px)`),
-            "cursor": disabled ? "wait" : "auto"
+            "cursor": disabled ? "wait" : "auto",
+            "display": displayNone ? "none" : undefined
         }}>
         <animated.div
             className={css.dialog}
