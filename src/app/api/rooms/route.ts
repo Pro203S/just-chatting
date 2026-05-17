@@ -1,4 +1,4 @@
-import { getSocketServer } from "@/socket";
+import { findSocketServer } from "@/socket";
 import { getDatabase } from "@/src/modules/database";
 import generateId from "@/src/modules/generateId";
 import { verifyAccessToken } from "@/src/modules/token";
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
         }, { "status": 403 });
 
         const rooms = database.get("rooms");
-        const rawFoundRooms = rooms.findAll(v => v.members.includes(user.id));
+        const rawFoundRooms = rooms.findAll(v => v.members.map(v => v.id).includes(user.id));
         const foundRooms = rawFoundRooms.map(v => v.value());
         return NextResponse.json(foundRooms, {
             "status": 200
@@ -74,14 +74,14 @@ export async function POST(req: NextRequest) {
         const room: Room = {
             "id": generateId("ROM"),
             "invitedUsers": [],
-            "members": [user.id],
+            "members": [user],
             "name": name ?? `${user.name}님의 방`,
             "icon": user.profile
         };
         rooms.add(room);
 
-        const io = getSocketServer();
-        io.to(`user:${user.id}`).emit("roomCreate", room);
+        const io = findSocketServer();
+        io?.to(`user:${user.id}`).emit("roomCreate", room);
 
         return new Response(null, { "status": 204 });
     } catch (err) {
@@ -123,7 +123,7 @@ export async function PUT(req: NextRequest) {
         rooms.add({
             "id": generateId("ROM"),
             "invitedUsers": [],
-            "members": [user.id],
+            "members": [user],
             "name": name ?? `${user.name}님의 방`,
             "icon": user.profile
         });

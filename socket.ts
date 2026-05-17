@@ -17,7 +17,23 @@ type IOSocket = Socket<
     SocketData
 >;
 
-let io: IOServer | null = null;
+type SocketGlobal = typeof globalThis & {
+    __justChattingSocketServer?: IOServer | null;
+};
+
+const socketGlobal = globalThis as SocketGlobal;
+
+let io: IOServer | null = socketGlobal.__justChattingSocketServer ?? null;
+
+function setSocketServer(server: IOServer) {
+    socketGlobal.__justChattingSocketServer = server;
+    io = server;
+    return server;
+}
+
+export function findSocketServer() {
+    return socketGlobal.__justChattingSocketServer ?? io;
+}
 
 function close(socket: IOSocket, code: number, reason: string) {
     socket.emit("error", code, reason);
@@ -25,11 +41,12 @@ function close(socket: IOSocket, code: number, reason: string) {
 }
 
 export function initSocketServer(httpServer: HttpServer) {
-    if (io) {
-        return io;
+    const existingServer = findSocketServer();
+    if (existingServer) {
+        return existingServer;
     }
 
-    io = new Server<
+    const server = setSocketServer(new Server<
         SocketOnEvents,
         SocketEmitEvents,
         DefaultEventsMap,
@@ -39,9 +56,9 @@ export function initSocketServer(httpServer: HttpServer) {
         cors: {
             origin: "*",
         },
-    });
+    }));
 
-    io.on("connection", async (socket) => {
+    server.on("connection", async (socket) => {
         console.log("Socket Connected:", socket.id);
 
         const identifyTimeout = setTimeout(() => {
@@ -89,13 +106,14 @@ export function initSocketServer(httpServer: HttpServer) {
         });
     });
 
-    return io;
+    return server;
 }
 
 export function getSocketServer() {
-    if (!io) {
+    const server = findSocketServer();
+    if (!server) {
         throw new Error("Socket.IO server is not initialized.");
     }
 
-    return io;
+    return server;
 }
