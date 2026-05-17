@@ -15,24 +15,30 @@
 
 .button {
     margin-top: 10px;
-    display: flex;
-    padding: 7px;
-    background-color: #010101;
-    border-radius: 15px;
-    transition: .25s;
-    cursor: pointer;
-    border: #000 solid 0px;
+    width: fit-content;
+    padding: 7px 12px;
+    border-radius: 50px;
+    background-color: #ffffff;
     text-decoration: none;
-    
+    transition-duration: .25s;
+    cursor: pointer;
+    border: 1px solid #ffffff00;
 }
 
 .button span {
-    font-size: 1.1rem;
+    font-size: .96rem;
+    font-weight: 600;
+    color: #111;
+}
+
+.button:hover span {
     color: #fff;
 }
 
 .button:hover {
-    filter: invert(100%);
+    background-color: #ffffff1f;
+    backdrop-filter: blur(5px);
+    border: 1px solid #ffffff1a;
 }
 
 .linearH {

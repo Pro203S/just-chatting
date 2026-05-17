@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { animated, easings, to, useSpring } from '@react-spring/web';
 import { createPortal } from 'react-dom';
 import css from './styles.module.css';
@@ -219,6 +219,9 @@ export default function Dropdown(props: Props) {
             className={mergeClassNames(css.item, item.className)}
             style={item.style}
             disabled={item.disabled}
+            onPointerDown={(event) => {
+                event.stopPropagation();
+            }}
             onClick={(event) => {
                 event.stopPropagation();
                 item.onClick?.();
@@ -243,9 +246,11 @@ export default function Dropdown(props: Props) {
         ref={rootRef}
         className={mergeClassNames(css.container, css.trigger, containerClassName)}
         style={containerStyle}
-        onClick={(event: ReactMouseEvent<HTMLDivElement>) => {
+        onPointerDown={(event: ReactPointerEvent<HTMLDivElement>) => {
             if (event.defaultPrevented) return;
+            if (event.button !== 0) return;
 
+            event.preventDefault();
             toggleDropdown();
         }}
         onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -276,6 +281,7 @@ export default function Dropdown(props: Props) {
             <animated.div
                 ref={dropdownPanelRef}
                 className={mergeClassNames(css.dropdown, className)}
+                onPointerDown={(event) => event.stopPropagation()}
                 onClick={(event) => event.stopPropagation()}
                 onKeyDown={(event) => event.stopPropagation()}
                 style={{

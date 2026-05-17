@@ -86,7 +86,7 @@ export default function Dialog(props: Props) {
         >
             <div className={css.texts}>
                 <span className={css.title}>{title}</span>
-                <span className={css.description}>{description}</span>
+                {description.split("\n").map(v => <span className={css.description} key={v}>{v}</span>)}
             </div>
             <div className={css.buttons}>
                 {buttons.map(v => <button key={v.text} className={css.button} onClick={v.onClick}>
