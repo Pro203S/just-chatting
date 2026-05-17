@@ -43,3 +43,5 @@ next-env.d.ts
 bun.lock
 
 database.json
+
+!.env.example
