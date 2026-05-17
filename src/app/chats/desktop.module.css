@@ -50,8 +50,8 @@
 }
 
 .rooms .room .roomIcon {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     color: #fff;
 }
 
@@ -78,7 +78,7 @@
 .blank {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 15px;
     margin: auto;
 }
 
@@ -93,8 +93,8 @@
 }
 
 .blank .icon {
-    width: 64px;
-    height: 64px;
+    width: 54px;
+    height: 54px;
     margin: auto;
     transform: translate(-3.5px, 4px);
 }

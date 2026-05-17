@@ -65,7 +65,7 @@ declare global {
         "id": `ROM-${number}`,
         "name": string,
         "icon": string,
-        "members": User["id"][],
+        "members": APIUser[],
         "invitedUsers": User["id"][]
     };
 
