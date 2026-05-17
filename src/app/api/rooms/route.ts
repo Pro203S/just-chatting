@@ -77,7 +77,8 @@ export async function POST(req: NextRequest) {
             "invitedUsers": [],
             "members": [user],
             "name": name ?? `${user.name}님의 방`,
-            "icon": user.profile
+            "icon": user.profile,
+            "owner": user.id
         };
         rooms.add(room);
 

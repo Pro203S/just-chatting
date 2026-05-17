@@ -68,7 +68,8 @@ declare global {
         "name": string,
         "icon": string,
         "members": APIUser[],
-        "invitedUsers": User["id"][]
+        "invitedUsers": User["id"][],
+        "owner": User["id"];
     };
 
     type Database = {
