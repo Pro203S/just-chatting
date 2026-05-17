@@ -73,7 +73,7 @@ export default function Header() {
                 <span>친구 찾기</span>
             </Link>
 
-            <Link href="/chats">
+            <Link href="/rooms">
                 <span>채팅방 목록</span>
             </Link>
         </div>
