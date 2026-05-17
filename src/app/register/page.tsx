@@ -6,10 +6,8 @@ import InOutAnimation from '@/src/components/InOutAnimation';
 import Link from 'next/link';
 import { animated, easings, useSpringValue } from '@react-spring/web';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
 
 export default function Page() {
-    const router = useRouter();
     const idRef = useRef<HTMLInputElement>(null);
     const pwRef = useRef<HTMLInputElement>(null);
     const nameRef = useRef<HTMLInputElement>(null);
@@ -49,7 +47,7 @@ export default function Page() {
 
             alert("가입하신걸 축하해요!\n이제 로그인해주세요.");
 
-            router.push("/login");
+            window.location.href = "/login";
         } catch (err) {
             const e = err as Error;
             alert(e.message);
