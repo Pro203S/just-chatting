@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { animated, easings, useSpringValue } from '@react-spring/web';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import PageTitle from '@/src/components/pageTitle';
 
 export default function Page() {
     const router = useRouter();
@@ -65,7 +66,7 @@ export default function Page() {
             "pointerEvents": controlDisabled ? "none" : "auto"
         }}>
             <div className={css.form}>
-                <span className={css.title}>가입하기</span>
+                <PageTitle title="가입하기" href="/login" />
                 <div className={css.inputBox}>
                     <span className={css.label} onClick={() => idRef.current && idRef.current.focus()}>ID</span>
                     <input type="text" placeholder='ID 입력' ref={idRef} />

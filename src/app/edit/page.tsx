@@ -8,6 +8,7 @@ import REST from '@/src/modules/rest';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Dialog, { DialogButton } from '@/src/components/dialog';
+import PageTitle from '@/src/components/pageTitle';
 
 function convertImageToBase64(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -89,7 +90,7 @@ export default function Page() {
                 "pointerEvents": controlDisabled ? "none" : "auto"
             }}>
                 <div className={css.form}>
-                    <span className={css.title}>프로필 수정</span>
+                    <PageTitle title="프로필 수정" href="/chats" />
                     <div className={css.profileBox}>
                         <img
                             draggable={false}

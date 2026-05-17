@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import REST from '@/src/modules/rest';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import PageTitle from '@/src/components/pageTitle';
 
 export default function Page() {
     const router = useRouter();
@@ -43,7 +44,7 @@ export default function Page() {
             "pointerEvents": controlDisabled ? "none" : "auto"
         }}>
             <div className={css.form}>
-                <span className={css.title}>비밀번호 변경</span>
+                <PageTitle title="비밀번호 변경" href="/edit" />
                 <div className={css.inputBox}>
                     <span className={css.label} onClick={() => pwRef.current && pwRef.current.focus()}>변경할 비밀번호</span>
                     <input

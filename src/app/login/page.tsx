@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { animated, easings, useSpringValue } from '@react-spring/web';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
+import PageTitle from '@/src/components/pageTitle';
 
 function LoginPageContent() {
     const router = useRouter();
@@ -69,7 +70,7 @@ function LoginPageContent() {
             "pointerEvents": controlDisabled ? "none" : "auto"
         }}>
             <div className={css.form}>
-                <span className={css.title}>로그인</span>
+                <PageTitle title="로그인" href="/" />
                 <div className={css.inputBox}>
                     <span className={css.label} onClick={() => idRef.current && idRef.current.focus()}>ID</span>
                     <input type="text" placeholder='ID 입력' ref={idRef} />
