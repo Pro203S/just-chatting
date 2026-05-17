@@ -59,7 +59,7 @@ export function initSocketServer(httpServer: HttpServer) {
     }));
 
     server.on("connection", async (socket) => {
-        console.log("Socket Connected:", socket.id);
+        console.log("  Socket Connected:", socket.id);
 
         const identifyTimeout = setTimeout(() => {
             close(socket, 103, "인증에 실패했습니다.");
@@ -110,7 +110,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
         socket.on("disconnect", (reason) => {
             clearTimeout(identifyTimeout);
-            console.log("Socket Disconnected:", socket.id, reason);
+            console.log("  Socket Disconnected:", socket.id, reason);
         });
     });
 
