@@ -6,6 +6,7 @@ import { animated, easings, useSpringValue } from '@react-spring/web';
 import { useEffect, useRef, useState } from 'react';
 import REST from '@/src/modules/rest';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 function convertImageToBase64(file: File) {
     return new Promise<string>((resolve, reject) => {
@@ -17,6 +18,7 @@ function convertImageToBase64(file: File) {
 }
 
 export default function Page() {
+    const router = useRouter();
     const [session, setSession] = useState<APIUser>();
     const [controlDisabled, setControlDisabled] = useState(false);
 
@@ -133,7 +135,7 @@ export default function Page() {
                                     throw new Error(r.data.message);
                                 }
 
-                                location.href = "/chats";
+                                router.push("/chats");
                             } catch (err) {
                                 const e = err as Error;
                                 alert(e.message);
