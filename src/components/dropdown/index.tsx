@@ -85,22 +85,39 @@ export default function Dropdown(props: Props) {
         ...DROPDOWN_ANIMATE_CONFIG
     }));
 
+    const getInitialDropdownPosition = () => {
+        if (!rootRef.current) return undefined;
+
+        const gap = 8;
+        const triggerRect = rootRef.current.getBoundingClientRect();
+
+        return {
+            "top": Math.max(gap, triggerRect.bottom + gap),
+            "left": Math.max(gap, triggerRect.left)
+        };
+    };
+
     const closeDropdown = () => {
         setOpen(false);
         onOpenChange?.(false);
     };
 
+    const openDropdown = () => {
+        dropdownAnimationApi.stop();
+        dropdownAnimationApi.set(DROPDOWN_CLOSED_STYLE);
+        setDropdownPosition(getInitialDropdownPosition());
+        setRenderDropdown(true);
+        setOpen(true);
+        onOpenChange?.(true);
+    };
+
     const toggleDropdown = () => {
-        setOpen(v => {
-            const next = !v;
-            if (next) {
-                setDropdownPosition(undefined);
-            }
+        if (open) {
+            closeDropdown();
+            return;
+        }
 
-            onOpenChange?.(next);
-
-            return next;
-        });
+        openDropdown();
     };
 
     const updateDropdownPosition = () => {
@@ -170,24 +187,23 @@ export default function Dropdown(props: Props) {
     }, [open, renderDropdown, items, dropdown]);
 
     useEffect(() => {
-        let cancelled = false;
+        if (!open || !renderDropdown) return;
 
-        if (open) {
-            setRenderDropdown(true);
-            dropdownAnimationApi.set(DROPDOWN_CLOSED_STYLE);
-
-            requestAnimationFrame(() => {
-                if (cancelled) return;
-
-                void dropdownAnimationApi.start({
-                    ...DROPDOWN_OPEN_STYLE
-                });
+        const frame = requestAnimationFrame(() => {
+            void dropdownAnimationApi.start({
+                ...DROPDOWN_OPEN_STYLE
             });
+        });
 
-            return () => {
-                cancelled = true;
-            };
-        }
+        return () => {
+            cancelAnimationFrame(frame);
+        };
+    }, [open, renderDropdown, dropdownAnimationApi]);
+
+    useEffect(() => {
+        if (open || !renderDropdown) return;
+
+        let cancelled = false;
 
         void dropdownAnimationApi.start({
             ...DROPDOWN_CLOSED_STYLE,
@@ -195,13 +211,14 @@ export default function Dropdown(props: Props) {
                 if (cancelled) return;
 
                 setRenderDropdown(false);
+                setDropdownPosition(undefined);
             }
         });
 
         return () => {
             cancelled = true;
         };
-    }, [open, dropdownAnimationApi]);
+    }, [open, renderDropdown, dropdownAnimationApi]);
 
     const dropdownContent = items ? items.map((item, index) => {
         if (item.type === "separator") {

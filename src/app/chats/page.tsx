@@ -10,7 +10,7 @@ import { io, Socket } from 'socket.io-client';
 import refreshSession from '@/src/modules/refreshSession';
 import useWindowDimensions from '@/src/modules/useWindowDimensions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faInfo, faPaperPlane, faPlus, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faBars, faPaperPlane, faPlus, faUsers } from '@fortawesome/free-solid-svg-icons';
 import Form from '@/src/components/form';
 import Dropdown from '@/src/components/dropdown';
 import Dialog, { DialogButton } from '@/src/components/dialog';
@@ -288,9 +288,45 @@ export default function Page() {
                                 <Dropdown
                                     containerClassName={css.button}
                                     items={[
+                                        {
+                                            "label": "방 이름 수정",
+                                            "onClick": () => {
+
+                                            }
+                                        },
+                                        {
+                                            "label": "방 아이콘 수정",
+                                            "onClick": () => {
+
+                                            }
+                                        },
+                                        {
+                                            "type": "separator"
+                                        },
+                                        (selectedRoom.owner === session?.id ? {
+                                            "label": <span style={{ "color": "#f81313" }}>삭제하기</span>,
+                                            "onClick": () => {
+
+                                            }
+                                        } : {
+                                            "label": <span style={{ "color": "#f81313" }}>나가기</span>,
+                                            "onClick": () => {
+
+                                            }
+                                        })
+                                    ]}
+                                >
+                                    <FontAwesomeIcon
+                                        icon={faBars}
+                                    />
+                                </Dropdown>
+                                <Dropdown
+                                    containerClassName={css.button}
+                                    items={[
                                         ...(selectedRoom.members.map(v => ({
                                             "label": v.name,
                                             "src": v.profile,
+                                            "disabled": selectedRoom.owner !== session?.id,
                                             "onClick": () => {
                                                 setDialogTitle("유저 관리");
                                                 setDialogDesc(v.name + "\n이 유저에 대해 수행할 작업을 선택해주세요.");
