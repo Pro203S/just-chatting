@@ -108,7 +108,7 @@ export default function Header(props: Props) {
 
                 <Link
                     className={css.profileLinkAction}
-                    href="/users/@me/edit"
+                    href="/edit"
                 >
                     프로필 변경
                 </Link>
