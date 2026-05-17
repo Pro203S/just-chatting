@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import refreshSession from './refreshSession';
 
 export type RequestConfig<D, IfSuccess, IfError> = Omit<AxiosRequestConfig<D> & {
     /**
@@ -19,7 +20,7 @@ export interface RequestBaseResponse<T = any, Success = boolean> {
 
 export type RequestResponse<S = any, E = any> = RequestSuccessResponse<S> | RequestErrorResponse<E>;
 
-export default async function REST<IfSuccess = any, IfError = any, Data = any>(route: string, config: RequestConfig<Data, IfSuccess, IfError>): Promise<RequestResponse<IfSuccess, IfError>> {
+export default async function REST<IfSuccess = any, IfError = any, Data = any>(route: string, config?: RequestConfig<Data, IfSuccess, IfError>): Promise<RequestResponse<IfSuccess, IfError>> {
     try {
         const rawTokenExpiresAt = localStorage.getItem("expires_at");
         if (rawTokenExpiresAt) {
@@ -30,29 +31,37 @@ export default async function REST<IfSuccess = any, IfError = any, Data = any>(r
             }
 
             if (expiresAt < new Date().getTime()) {
-                // /api/auth/refresh에 요청 넣고 성공하면 요청 진행, 실패하면 throw
+                await refreshSession();
 
-                
+                return await REST<IfSuccess, IfError, Data>(route, config);
             }
         }
-        config.isSuccess = (_, s) => Math.floor(s / 100) === 2;
+        const rConfig = config ?? {};
+        rConfig.isSuccess = (_, s) => Math.floor(s / 100) === 2;
 
         const headers = {
-            ...config.headers,
+            ...rConfig.headers,
             "Authorization": localStorage.getItem("access_token")
         }
 
-        const t = new Date();
         const r = await axios({
-            ...config,
+            ...rConfig,
             "validateStatus": () => true,
             "url": route,
             headers
         });
         const status = r.status;
-        console.log(config.method ?? "GET", route, r.status, (new Date().getTime() - t.getTime()) + "ms");
 
-        if (config.isSuccess && !config.isSuccess(r.data, status)) {
+        if (r.status === 401 || r.status === 403) {
+            const authError = (r.data as APIAuthError).code;
+            if (authError === "INVALID_TOKEN") {
+                await refreshSession();
+
+                return await REST<IfSuccess, IfError, Data>(route, config);
+            }
+        }
+
+        if (rConfig.isSuccess && !rConfig.isSuccess(r.data, status)) {
             return {
                 status,
                 "data": r.data,

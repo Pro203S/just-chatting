@@ -48,6 +48,12 @@ declare global {
     };
 
     type APIError = {
+        "code"?: string,
+        "message": string
+    };
+
+    type APIAuthError = {
+        "code": "TOKEN_NOT_PROVIDED" | "INVALID_TOKEN" | "USER_NOT_FOUND",
         "message": string
     };
 
