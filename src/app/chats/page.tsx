@@ -18,6 +18,8 @@ import Dialog, { DialogButton } from '@/src/components/dialog';
 export default function Page() {
     const router = useRouter();
     const socket = useRef<ReturnType<typeof io>>(null);
+    const currentRoomRef = useRef<Room | undefined>(undefined);
+    const sessionRef = useRef<APIUser | undefined>(undefined);
 
     const { width } = useWindowDimensions();
 
@@ -25,9 +27,9 @@ export default function Page() {
 
     const [loading, setLoading] = useState(true);
     const [session, setSession] = useState<APIUser>();
-    const [rooms, setRooms] = useState<Room[]>([]);
+    const [rooms, setCurrentRooms] = useState<Room[]>([]);
 
-    const [room, setRoom] = useState<Room>();
+    const [currentRoom, setCurrentRoom] = useState<Room>();
     const [members, setMembers] = useState<APIUser[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
 
@@ -39,6 +41,10 @@ export default function Page() {
     const [joinRoomLoading, setJoinRoomLoading] = useState(false);
     const [joinRoomError, setJoinRoomError] = useState<string>();
 
+    const [inviteUserShow, setInviteUserShow] = useState(false);
+    const [inviteUserLoading, setInviteUserLoading] = useState(false);
+    const [inviteUserError, setInviteUserError] = useState<string>();
+
     const [dialogTitle, setDialogTitle] = useState("");
     const [dialogDesc, setDialogDesc] = useState("");
     const [dialogButtons, setDialogButtons] = useState<DialogButton[]>([]);
@@ -48,6 +54,14 @@ export default function Page() {
     useEffect(() => {
         setCss(width > 650 ? desktopCss : mobileCss);
     }, [width]);
+
+    useEffect(() => {
+        currentRoomRef.current = currentRoom;
+    }, [currentRoom]);
+
+    useEffect(() => {
+        sessionRef.current = session;
+    }, [session]);
 
     useEffect(() => {
         (async () => {
@@ -99,26 +113,53 @@ export default function Page() {
                     }
                 });
 
-                sock.on("roomCreate", (room) => setRooms(v => [
+                sock.on("roomCreate", (room) => setCurrentRooms(v => [
                     room,
                     ...v
                 ]));
 
-                const editRoom = (room: Room) => setRooms(v => {
-                    const index = v.findIndex(r => r.id === room.id);
-                    if (index === -1) return v;
+                const syncMembers = async (roomId: Room["id"]) => {
+                    const r = await REST<APIUser[], APIError>(`/api/rooms/${roomId}/members`);
+                    if (!r.success) {
+                        alert("예기치 않은 오류가 발생했어요.");
+                        location.reload();
+                        return;
+                    }
 
-                    const arr = [...v];
-                    arr[index] = room;
+                    setMembers(r.data.filter(v => v.id !== sessionRef.current?.id));
+                };
 
-                    return arr;
+                const editRoom = (room: Room) => {
+                    setCurrentRooms(v => {
+                        const index = v.findIndex(r => r.id === room.id);
+                        if (index === -1) return v;
+
+                        const arr = [...v];
+                        arr[index] = room;
+
+                        return arr;
+                    });
+
+                    setCurrentRoom(v => v?.id === room.id ? room : v);
+                };
+
+                const deleteRoom = (room: Room) => setCurrentRooms(v => v.filter(r => r.id !== room.id));
+
+                sock.on("roomJoin", async (room) => {
+                    editRoom(room);
+
+                    if (currentRoomRef.current?.id !== room.id) return;
+
+                    await syncMembers(room.id);
                 });
-
-                const deleteRoom = (room: Room) => setRooms(v => v.filter(r => r.id !== room.id));
-
-                sock.on("roomJoin", editRoom);
                 sock.on("roomEdit", editRoom);
-                sock.on("roomLeave", editRoom);
+                sock.on("roomLeave", async (room) => {
+                    editRoom(room);
+
+                    if (currentRoomRef.current?.id !== room.id) return;
+
+                    await syncMembers(room.id);
+                });
 
                 sock.on("roomKicked", deleteRoom);
                 sock.on("roomDelete", deleteRoom);
@@ -136,7 +177,7 @@ export default function Page() {
                     return router.replace("/");
                 }
 
-                setRooms(r.data);
+                setCurrentRooms(r.data);
             } catch (err) {
                 const e = err as Error;
                 alert(e.message);
@@ -157,7 +198,7 @@ export default function Page() {
             location.reload();
             return;
         }
-        setRoom(room);
+        setCurrentRoom(room);
 
         const r = await REST<APIUser[], APIError>(`/api/rooms/${room.id}/members`);
         if (!r.success) {
@@ -203,6 +244,7 @@ export default function Page() {
                     return;
                 }
 
+                setCreateRoomLoading(false);
                 setCreateRoomShow(false);
             }}
             submitText={"만들기"}
@@ -240,12 +282,67 @@ export default function Page() {
                     return;
                 }
 
+                setJoinRoomLoading(false);
                 setJoinRoomShow(false);
             }}
             submitText={"입장하기"}
             onCancel={() => {
                 setJoinRoomError(undefined);
                 setJoinRoomShow(false);
+            }}
+        />
+        <Form
+            title="초대하기"
+            description={`유저를 초대해요.\n현재 방 코드는 ${currentRoom?.id}입니다.`}
+            error={inviteUserError}
+            disabled={inviteUserLoading}
+            inputs={[{
+                "id": "id",
+                "placeholder": "유저 ID",
+                "name": "유저 ID"
+            }]}
+            showForm={inviteUserShow}
+            onSubmit={async (data: { "id": string }) => {
+                if (!currentRoom) {
+                    alert("방을 선택해주세요.");
+                    return;
+                }
+
+                const { id } = data;
+                if (!id) return setInviteUserError("유저 ID를 입력해주세요!");
+
+                setInviteUserLoading(true);
+
+                const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}`, {
+                    "method": "POST",
+                    "data": {
+                        "invite": id
+                    }
+                });
+                if (!r.success) {
+                    setInviteUserError(r.data.message);
+                    setInviteUserLoading(false);
+                    return;
+                }
+
+                setInviteUserLoading(false);
+                setInviteUserShow(false);
+
+                setDialogTitle("초대하기");
+                setDialogDesc("초대할 상대에게 아래 방 코드를 알려주세요.\n" + currentRoom.id);
+                setDialogButtons([
+                    {
+                        "text": "확인",
+                        "onClick": () => setDialogOpen(false)
+                    }
+                ]);
+                setDialogClosable(true);
+                setDialogOpen(true);
+            }}
+            submitText={"초대하기"}
+            onCancel={() => {
+                setInviteUserError(undefined);
+                setInviteUserShow(false);
             }}
         />
         <Dialog
@@ -281,7 +378,7 @@ export default function Page() {
                         className={css.room}
                         onClick={() => handleRoomClick(v.id)}
                         style={{
-                            "backgroundColor": room?.id === v.id ? "#464646" : undefined
+                            "backgroundColor": currentRoom?.id === v.id ? "#464646" : undefined
                         }}
                     >
                         <img draggable={false} src={v.icon} className={css.roomIcon} />
@@ -291,7 +388,7 @@ export default function Page() {
                         </div>
                     </button>)}
                 </div>
-                {!room ?
+                {!currentRoom ?
                     <div className={css.blank}>
                         <div className={css.iconContainer}>
                             <FontAwesomeIcon icon={faPaperPlane} className={css.icon} />
@@ -301,8 +398,8 @@ export default function Page() {
                     <div className={css.chatting}>
                         <div className={css.roomHeader}>
                             <div className={css.roomInfo}>
-                                <img draggable={false} src={room.icon} className={css.icon} />
-                                <span className={css.name}>{room.name}</span>
+                                <img draggable={false} src={currentRoom.icon} className={css.icon} />
+                                <span className={css.name}>{currentRoom.name}</span>
                             </div>
                             <div className={css.roomMenus}>
                                 <Dropdown
@@ -323,7 +420,7 @@ export default function Page() {
                                         {
                                             "type": "separator"
                                         },
-                                        (room.owner === session?.id ? {
+                                        (currentRoom.owner === session?.id ? {
                                             "label": <span style={{ "color": "#f81313" }}>삭제하기</span>,
                                             "onClick": () => {
 
@@ -346,7 +443,7 @@ export default function Page() {
                                         ...(members.map(v => ({
                                             "label": v.name,
                                             "src": v.profile,
-                                            "disabled": room.owner !== session?.id,
+                                            "disabled": currentRoom.owner !== session?.id,
                                             "onClick": () => {
                                                 setDialogTitle("유저 관리");
                                                 setDialogDesc(v.name + "\n이 유저에 대해 수행할 작업을 선택해주세요.");
@@ -358,7 +455,18 @@ export default function Page() {
                                                     {
                                                         "text": "강퇴",
                                                         "onClick": async () => {
+                                                            setDialogOpen(false);
 
+                                                            const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}/members`, {
+                                                                "method": "DELETE",
+                                                                "params": {
+                                                                    "target": v.id
+                                                                }
+                                                            });
+                                                            if (!r.success) {
+                                                                alert(r.data.message);
+                                                                return;
+                                                            }
                                                         }
                                                     }
                                                 ]);
@@ -371,9 +479,7 @@ export default function Page() {
                                         }] : []),
                                         {
                                             "label": "초대하기",
-                                            "onClick": () => {
-
-                                            }
+                                            "onClick": () => setInviteUserShow(true)
                                         }
                                     ]}
                                 >
