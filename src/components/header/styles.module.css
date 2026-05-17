@@ -104,8 +104,25 @@
     color: #fff;
     cursor: pointer;
     transition: background-color .2s ease;
+    font-size: 15px;
 }
 
+.profileLinkAction {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 36px;
+    border: none;
+    border-radius: 12px;
+    background-color: #232323;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color .2s ease;
+    font-size: 15px;
+    text-decoration: none;
+}
+
+.profileLinkAction:hover,
 .profileAction:hover:enabled {
     background-color: #2d2d2d;
 }

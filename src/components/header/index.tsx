@@ -57,35 +57,10 @@ export default function Header() {
             }
         };
 
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "Escape") {
-                setMenuOpen(false);
-            }
-        };
-
         document.addEventListener("mousedown", handlePointerDown);
-        document.addEventListener("keydown", handleKeyDown);
 
-        return () => {
-            document.removeEventListener("mousedown", handlePointerDown);
-            document.removeEventListener("keydown", handleKeyDown);
-        };
+        return () => document.removeEventListener("mousedown", handlePointerDown);
     }, []);
-
-    const handleLogout = async () => {
-        try {
-            setLoggingOut(true);
-
-            await fetch("/api/auth/logout", {
-                "method": "POST"
-            });
-        } finally {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("expires_at");
-            setMenuOpen(false);
-            router.replace("/login");
-        }
-    };
 
     return <div className={css.header}>
         <LogoRedirect style={{
@@ -121,7 +96,6 @@ export default function Header() {
 
             {menuTransitions((style, item) => item ? <animated.div
                 className={css.profileMenu}
-                role="menu"
                 style={{
                     "opacity": style.opacity,
                     "transform": style.y.to((value) => `translateY(${value}px)`)
@@ -132,12 +106,30 @@ export default function Header() {
                     <span className={css.profileId}>{account?.userId ? `@${account.userId}` : "세션 확인 중"}</span>
                 </div>
 
+                <Link
+                    className={css.profileLinkAction}
+                    href="/users/@me/edit"
+                >
+                    프로필 변경
+                </Link>
+
                 <button
                     className={css.profileAction}
-                    type="button"
-                    role="menuitem"
-                    onClick={handleLogout}
                     disabled={loggingOut}
+                    onClick={async () => {
+                        try {
+                            setLoggingOut(true);
+
+                            await fetch("/api/auth/logout", {
+                                "method": "POST"
+                            });
+                        } finally {
+                            localStorage.removeItem("access_token");
+                            localStorage.removeItem("expires_at");
+                            setMenuOpen(false);
+                            router.replace("/login");
+                        }
+                    }}
                 >
                     {loggingOut ? "로그아웃 중..." : "로그아웃"}
                 </button>
