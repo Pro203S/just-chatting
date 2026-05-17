@@ -21,6 +21,8 @@ export default function Page() {
     const currentRoomRef = useRef<Room | undefined>(undefined);
     const sessionRef = useRef<APIUser | undefined>(undefined);
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const { width } = useWindowDimensions();
 
     const [css, setCss] = useState<Record<string, string>>(desktopCss);
@@ -44,6 +46,10 @@ export default function Page() {
     const [inviteUserShow, setInviteUserShow] = useState(false);
     const [inviteUserLoading, setInviteUserLoading] = useState(false);
     const [inviteUserError, setInviteUserError] = useState<string>();
+
+    const [roomNameShow, setRoomNameShow] = useState(false);
+    const [roomNameLoading, setRoomNameLoading] = useState(false);
+    const [roomNameError, setRoomNameError] = useState<string>();
 
     const [dialogTitle, setDialogTitle] = useState("");
     const [dialogDesc, setDialogDesc] = useState("");
@@ -215,6 +221,50 @@ export default function Page() {
     if (loading) return null;
 
     return <>
+        <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={async (ev) => {
+                if (!currentRoom) {
+                    alert("방을 선택해주세요.");
+                    return;
+                }
+
+                const files = ev.target.files;
+                if (!files || files.length < 0) return;
+
+                const file = files[files.length - 1];
+
+                if (file.size > 16 * 1000 * 1000) {
+                    alert("파일 크기는 16MB 미만이여야 합니다.");
+                    return;
+                }
+
+                function convertImageToBase64(file: File) {
+                    return new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = (error) => reject(error);
+                    });
+                }
+
+                const base64 = await convertImageToBase64(file);
+
+                const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}`, {
+                    "method": "PUT",
+                    "data": {
+                        "icon": base64
+                    }
+                });
+                if (!r.success) {
+                    alert(r.data.message);
+                    return;
+                }
+            }}
+        />
         <Form
             title="방 만들기"
             description="채팅방을 새로 만들게요."
@@ -345,6 +395,50 @@ export default function Page() {
                 setInviteUserShow(false);
             }}
         />
+        <Form
+            title="방 이름 수정"
+            description="새로운 방 이름을 아래에 입력해주세요."
+            error={roomNameError}
+            disabled={roomNameLoading}
+            inputs={[{
+                "id": "name",
+                "placeholder": "방 이름",
+                "name": "방 이름",
+                "value": currentRoom?.name
+            }]}
+            showForm={roomNameShow}
+            onSubmit={async (data: { "name": string }) => {
+                if (!currentRoom) {
+                    alert("방을 선택해주세요.");
+                    return;
+                }
+
+                const { name } = data;
+                if (!name) return setRoomNameError("유저 ID를 입력해주세요!");
+
+                setRoomNameLoading(true);
+
+                const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}`, {
+                    "method": "PUT",
+                    "data": {
+                        name
+                    }
+                });
+                if (!r.success) {
+                    setRoomNameError(r.data.message);
+                    setRoomNameLoading(false);
+                    return;
+                }
+
+                setRoomNameLoading(false);
+                setRoomNameShow(false);
+            }}
+            submitText={"수정하기"}
+            onCancel={() => {
+                setRoomNameError(undefined);
+                setRoomNameShow(false);
+            }}
+        />
         <Dialog
             title={dialogTitle}
             description={dialogDesc}
@@ -407,14 +501,17 @@ export default function Page() {
                                     items={[
                                         {
                                             "label": "방 이름 수정",
-                                            "onClick": () => {
-
-                                            }
+                                            "onClick": () => setRoomNameShow(true)
                                         },
                                         {
                                             "label": "방 아이콘 수정",
                                             "onClick": () => {
+                                                if (!fileInputRef.current) {
+                                                    router.refresh();
+                                                    return;
+                                                }
 
+                                                fileInputRef.current.click();
                                             }
                                         },
                                         {

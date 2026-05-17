@@ -62,7 +62,7 @@ declare global {
         "id": `MSG-${number}`,
         "content": string,
         "attachment": Attachment,
-        "sender": APIUser
+        "sender": User["id"];
     };
 
     type Room = {
@@ -72,6 +72,7 @@ declare global {
         "members": User["id"][],
         "invitedUsers": User["id"][],
         "owner": User["id"];
+        "messages": Message["id"][];
     };
 
     type Database = {
