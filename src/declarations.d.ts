@@ -36,7 +36,7 @@ declare global {
         "id": `USR-${number}`,
         "userId": string,
         "name": string,
-        "profile"?: string,
+        "profile": string,
         "password": string
     };
 
@@ -57,6 +57,7 @@ declare global {
     type Room = {
         "id": `ROM-${number}`,
         "name": string,
+        "icon": string,
         "members": User["id"][],
         "invitedUsers": User["id"][]
     };

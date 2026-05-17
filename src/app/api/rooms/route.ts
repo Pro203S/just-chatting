@@ -74,7 +74,8 @@ export async function POST(req: NextRequest) {
             "id": generateId("ROM"),
             "invitedUsers": [],
             "members": [user.id],
-            "name": name ?? `${user.name}님의 방`
+            "name": name ?? `${user.name}님의 방`,
+            "icon": user.profile
         });
 
         return new Response(null, { "status": 204 });
