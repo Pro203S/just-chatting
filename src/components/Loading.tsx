@@ -1,7 +1,6 @@
 "use client";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import css from './styles.module.css';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 type Props = {
@@ -9,12 +8,20 @@ type Props = {
 }
 
 export default function Loading(props: Props) {
-    return <div className={css.screen} style={props.fullscr ? {
-        "width": "100%",
-        "height": "100%"
-    } : undefined}>
+    return <div style={{
+        ...(props.fullscr ? {
+            "width": "100vw",
+            "height": "100vh"
+        } : undefined),
+        "display": "flex",
+        "justifyContent": "center",
+        "alignItems": "center"
+    }}>
         <FontAwesomeIcon
-            className={css.loading}
+            style={{
+                "margin": "auto",
+                "fontSize": "2rem"
+            }}
             color="#888"
             icon={faCircleNotch}
             spin
