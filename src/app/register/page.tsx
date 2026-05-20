@@ -51,7 +51,7 @@ export default function Page() {
 
             alert("가입하신걸 축하해요!\n이제 로그인해주세요.");
 
-            router.replace("/login");
+            router.push("/login");
         } catch (err) {
             const e = err as Error;
             alert(e.message);
