@@ -23,7 +23,6 @@ export async function proxy(req: NextRequest) {
 export const config = {
     "matcher": [
         "/api/rooms/:path*",
-        "/api/users/:path",
-        "/api/messages/:path*"
+        "/api/users/:path"
     ]
 };
