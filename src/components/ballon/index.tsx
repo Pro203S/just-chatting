@@ -9,7 +9,7 @@ type Props = {
     "messages": APIMessage[];
 }
 
-export default function Ballon(prop: Props) {
+export default function Ballon(props: Props) {
     return <div>
 
     </div>;
