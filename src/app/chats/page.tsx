@@ -57,6 +57,53 @@ export default function Page() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogClosable, setDialogClosable] = useState(true);
 
+    const reloadWithWarning = (message: string) => {
+        alert(message);
+        location.reload();
+    };
+
+    const confirmDialog = (title: string, message: string, opt?: Partial<{
+        "closable": boolean,
+        "ok": string,
+        "cancel": string
+    }>) => new Promise<boolean>(r => {
+        setDialogTitle(title);
+        setDialogDesc(message);
+        setDialogButtons([
+            {
+                "text": opt?.cancel ?? "취소",
+                "onClick": () => {
+                    r(false);
+                    setDialogOpen(false);
+                }
+            },
+            {
+                "text": opt?.ok ?? "확인",
+                "onClick": () => {
+                    r(true);
+                    setDialogOpen(false);
+                }
+            }
+        ]);
+        setDialogClosable(opt?.closable ?? true);
+        setDialogOpen(true);
+    });
+
+    const showErrorDialog = (msg: string) => {
+        setDialogTitle("오류");
+        setDialogDesc(msg);
+        setDialogButtons([
+            {
+                "text": "확인",
+                "onClick": () => {
+                    setDialogOpen(false);
+                }
+            }
+        ]);
+        setDialogClosable(true);
+        setDialogOpen(true);
+    };
+
     useEffect(() => {
         setCss(width > 650 ? desktopCss : mobileCss);
     }, [width]);
@@ -83,7 +130,7 @@ export default function Page() {
                     sock.disconnect();
                     if (code === 101) {
                         await refreshSession();
-                        console.error("SOCKET ERROR: code = 101");
+                        console.error("[Socket] session expired.");
                         debugger;
                         location.reload();
                         return;
@@ -101,13 +148,6 @@ export default function Page() {
 
                     router.push("/");
                     return;
-                });
-
-                sock.on("disconnect", () => {
-                    localStorage.removeItem("access_token");
-                    localStorage.removeItem("expires_in");
-
-                    return router.replace("/login");
                 });
 
                 sock.on("identify", async () => {
@@ -489,7 +529,7 @@ export default function Page() {
                         <img draggable={false} src={v.icon} className={css.roomIcon} />
                         <div className={css.roomTexts}>
                             <span className={css.roomName}>{v.name}</span>
-                            <span className={css.roomDesc}>채팅방 멤버 {v.members.length}명</span>
+                            <span className={css.roomDesc}>멤버 {v.members.length}명</span>
                         </div>
                     </button>)}
                 </div>
@@ -520,7 +560,7 @@ export default function Page() {
                                                 if (!fileInputRef.current) {
                                                     console.error("fileInputRef was null.");
                                                     debugger;
-                                                    router.refresh();
+                                                    reloadWithWarning("예기치 않은 오류가 발생했어요.");
                                                     return;
                                                 }
 
@@ -532,13 +572,32 @@ export default function Page() {
                                         },
                                         (currentRoom.owner === session?.id ? {
                                             "label": <span style={{ "color": "#f81313" }}>삭제하기</span>,
-                                            "onClick": () => {
+                                            "onClick": async () => {
+                                                if (!await confirmDialog("방 삭제하기", `정말로 ${currentRoom.name} 방을 삭제하시겠어요?`, {
+                                                    "ok": "삭제"
+                                                })) return;
 
+                                                const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}`, {
+                                                    "method": "DELETE"
+                                                });
+                                                if (!r.success) {
+                                                    showErrorDialog("방 삭제에 실패했어요.\n" + r.data.message);
+                                                    return;
+                                                }
                                             }
                                         } : {
                                             "label": <span style={{ "color": "#f81313" }}>나가기</span>,
-                                            "onClick": () => {
-
+                                            "onClick": async () => {
+                                                const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}/members`, {
+                                                    "method": "DELETE",
+                                                    "params": {
+                                                        "target": "me"
+                                                    }
+                                                });
+                                                if (!r.success) {
+                                                    showErrorDialog("방 삭제에 실패했어요.\n" + r.data.message);
+                                                    return;
+                                                }
                                             }
                                         })
                                     ]}

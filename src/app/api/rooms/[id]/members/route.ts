@@ -87,6 +87,22 @@ export async function DELETE(req: NextRequest, { params }: {
             "message": "방을 찾을 수 없습니다."
         }, { "status": 404 });
 
+        if (target === "me") {
+            const members = room.get("members");
+            const memberIndex = members.findIndex(v => v === userId);
+            if (memberIndex === -1) return NextResponse.json({
+                "message": "대상을 찾을 수 없습니다."
+            }, { "status": 404 });
+
+            members.remove(memberIndex);
+
+            const io = getSocketServer();
+            io?.to(`user:${members.get(memberIndex).value()}`).emit("roomKicked", room.value());
+            io?.to(`room:${room.value().id}`).emit("roomLeave", room.value(), user);
+
+            return new Response(null, { "status": 204 });
+        }
+
         if (room.value().owner !== user.id) return NextResponse.json({
             "message": "방장만 변경할 수 있습니다."
         }, { "status": 403 });
