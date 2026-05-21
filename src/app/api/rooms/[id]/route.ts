@@ -19,7 +19,10 @@ export async function GET(req: NextRequest, { params }: {
             "message": "방을 찾을 수 없습니다."
         }, { "status": 404 });
 
-        return NextResponse.json(room, { "status": 200 });
+        return NextResponse.json({
+            ...room,
+            "messages": undefined
+        }, { "status": 200 });
     } catch (err) {
         const e = err as Error;
         return NextResponse.json({
