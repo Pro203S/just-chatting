@@ -83,6 +83,8 @@ export default function Page() {
                     sock.disconnect();
                     if (code === 101) {
                         await refreshSession();
+                        console.error("SOCKET ERROR: code = 101");
+                        debugger;
                         location.reload();
                         return;
                     }
@@ -128,6 +130,8 @@ export default function Page() {
                     const r = await REST<APIUser[], APIError>(`/api/rooms/${roomId}/members`);
                     if (!r.success) {
                         alert("예기치 않은 오류가 발생했어요.");
+                        console.error("[syncMembers] Request failed with status code " + r.status);
+                        debugger;
                         location.reload();
                         return;
                     }
@@ -204,6 +208,8 @@ export default function Page() {
         const room = rooms.find(v => v.id === id);
         if (!room) {
             alert("예기치 않은 오류가 발생했어요.");
+            console.error("[handleRoomClick] Cannot find the room");
+            debugger;
             location.reload();
             return;
         }
@@ -212,6 +218,8 @@ export default function Page() {
         const r = await REST<APIUser[], APIError>(`/api/rooms/${room.id}/members`);
         if (!r.success) {
             alert("예기치 않은 오류가 발생했어요.");
+            console.error(`[handleRoomClick] /api/rooms/${room.id}/members request failed with status code ${r.status}`);
+            debugger;
             location.reload();
             return;
         }
@@ -510,6 +518,8 @@ export default function Page() {
                                             "label": "방 아이콘 수정",
                                             "onClick": () => {
                                                 if (!fileInputRef.current) {
+                                                    console.error("fileInputRef was null.");
+                                                    debugger;
                                                     router.refresh();
                                                     return;
                                                 }
