@@ -12,7 +12,7 @@ type FormInputText = {
 
 type Props = {
     "title": string,
-    "description": string | { "text": string, "draggable": boolean }[],
+    "description": string | { "text": string, "draggable"?: boolean }[],
     "error"?: string,
     "disabled"?: boolean,
     "showForm": boolean,

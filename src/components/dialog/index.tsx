@@ -9,7 +9,7 @@ export type DialogButton = {
 
 type Props = {
     "title": string,
-    "description": string | { "text": string, "draggable": boolean }[],
+    "description": string | { "text": string, "draggable"?: boolean }[],
     "buttons": DialogButton[],
     "open": boolean,
     "onCancel"?: () => any
