@@ -14,12 +14,16 @@ import { faArrowLeft, faBars, faPaperPlane, faPlus, faUsers } from '@fortawesome
 import Form from '@/src/components/form';
 import Dropdown from '@/src/components/dropdown';
 import Dialog, { DialogButton, DialogDescription } from '@/src/components/dialog';
+import Ballon from '@/src/components/ballon';
 
 export default function Page() {
     const router = useRouter();
     const socket = useRef<ReturnType<typeof io>>(null);
     const currentRoomRef = useRef<Room | undefined>(undefined);
     const sessionRef = useRef<APIUser | undefined>(undefined);
+    const inputMessageRef = useRef<HTMLInputElement | null>(null);
+    const sendMessageRef = useRef<HTMLButtonElement | null>(null);
+    const messagesRef = useRef<HTMLDivElement | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,7 +37,8 @@ export default function Page() {
 
     const [currentRoom, setCurrentRoom] = useState<Room>();
     const [members, setMembers] = useState<APIUser[]>([]);
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<APIMessage[]>([]);
+    const [inputers, setInputers] = useState<string[]>([]);
 
     const [createRoomShow, setCreateRoomShow] = useState(false);
     const [createRoomLoading, setCreateRoomLoading] = useState(false);
@@ -526,14 +531,26 @@ export default function Page() {
             <Header sessionOverride={session} />
             <div className={css.screen}>
                 <div className={css.rooms}>
-                    <button className={css.room} onClick={() => setCreateRoomShow(true)}>
+                    <button
+                        className={css.room}
+                        onClick={() => setCreateRoomShow(true)}
+                        onContextMenu={(ev) => {
+                            ev.preventDefault();
+                        }}
+                    >
                         <FontAwesomeIcon icon={faPlus} className={css.roomIcon} />
                         <div className={css.roomTexts}>
                             <span className={css.roomName}>방 만들기</span>
                             <span className={css.roomDesc}>여기를 클릭해 방을 만들어요.</span>
                         </div>
                     </button>
-                    <button className={css.room} onClick={() => setJoinRoomShow(true)}>
+                    <button
+                        className={css.room}
+                        onClick={() => setJoinRoomShow(true)}
+                        onContextMenu={(ev) => {
+                            ev.preventDefault();
+                        }}
+                    >
                         <FontAwesomeIcon icon={faArrowLeft} className={css.roomIcon} />
                         <div className={css.roomTexts}>
                             <span className={css.roomName}>방에 입장하기</span>
@@ -546,6 +563,10 @@ export default function Page() {
                         onClick={() => handleRoomClick(v.id)}
                         style={{
                             "backgroundColor": currentRoom?.id === v.id ? "#464646" : undefined
+                        }}
+                        onContextMenu={(ev) => {
+                            ev.preventDefault();
+                            handleRoomClick(v.id);
                         }}
                     >
                         <img draggable={false} src={v.icon} className={css.roomIcon} />
@@ -697,9 +718,73 @@ export default function Page() {
                                 </Dropdown>
                             </div>
                         </div>
-                        <div className={css.messages}>
+                        <div className={css.messages} ref={messagesRef}>
+                            {(() => {
+                                type ReturnT = {
+                                    "sender": APIMessage["sender"];
+                                    "messages": APIMessage[];
+                                }[];
+
+                                const toReturn: ReturnT = [];
+                                let lastSender: APIUser = messages?.[0]?.sender;
+                                let msgs: APIMessage[] = [];
+
+                                for (const message of messages) {
+                                    if (lastSender?.id !== message.sender?.id) {
+                                        toReturn.push({
+                                            "sender": lastSender,
+                                            "messages": msgs
+                                        });
+                                        msgs = [];
+                                    }
+
+                                    msgs.push(message);
+                                    lastSender = message.sender;
+                                }
+
+                                if (!lastSender && msgs.length > 0)
+                                    toReturn.push({
+                                        "sender": lastSender,
+                                        "messages": msgs
+                                    });
+
+                                console.log(toReturn);
+                                return toReturn;
+                            })()
+                                .map((v, i) => <Ballon
+                                    key={i}
+                                    sender={{
+                                        "name": v.sender.name,
+                                        "profile": v.sender.profile,
+                                        "sentByMe": session?.id === v.sender.id
+                                    }}
+                                    messages={v.messages}
+                                />)}
                         </div>
                         <div className={css.inputContainer}>
+                            {inputers.length > 0 && <span className={css.inputing}>{inputers.length > 3 ? "여러 사람이 입력중이에요..." : inputers.join("님, ") + "님이 입력중이에요..."}</span>}
+                            <div className={css.linearH}>
+                                <button className={css.iconBtn}>
+                                    <FontAwesomeIcon icon={faPlus} />
+                                </button>
+                                <input
+                                    type="text"
+                                    className={css.input}
+                                    ref={inputMessageRef}
+                                    placeholder="메시지 입력..."
+                                    onKeyDown={(ev) => {
+                                        if (ev.key !== "Enter") return;
+                                        if (!sendMessageRef.current) return;
+
+                                        sendMessageRef.current.click();
+                                    }}
+                                />
+                                <button className={css.iconBtn} ref={sendMessageRef} onClick={async () => {
+
+                                }}>
+                                    <FontAwesomeIcon icon={faPaperPlane} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 }

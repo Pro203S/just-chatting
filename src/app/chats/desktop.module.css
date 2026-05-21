@@ -12,7 +12,8 @@
     border-top: #464646 solid .5px;
 
     width: 100vw;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
 .rooms {
@@ -105,7 +106,9 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
-    width: calc(100vw - (220px + 30px));
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
 }
 
 .roomHeader {
@@ -114,6 +117,8 @@
     justify-content: space-between;
     border-bottom: .5px solid #464646;
     width: 100%;
+    height: 50px;
+    flex-shrink: 0;
 }
 
 .roomHeader .roomInfo {
@@ -170,4 +175,69 @@
     height: 24px;
     color: #fff;
     pointer-events: none;
+}
+
+.inputContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.inputContainer .inputing {
+    padding: 6px;
+    color: #fff;
+    font-size: 1rem;
+    border-top: #464646 solid .5px;
+}
+
+.inputContainer .linearH {
+    display: flex;
+    flex-direction: row;
+    height: 50px;
+    border-top: #464646 solid .5px;
+}
+
+.inputContainer .iconBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    cursor: pointer;
+    border: #000 solid 0px;
+    background-color: #111;
+
+    will-change: background-color;
+    transition: .25s;
+    padding: 10px;
+}
+
+.inputContainer .iconBtn:hover {
+    background-color: #464646;
+}
+
+.inputContainer .iconBtn svg {
+    color: #fff;
+    width: 30px;
+    height: 30px;
+}
+
+.inputContainer .input {
+    display: flex;
+    flex: 1;
+    border: #000 solid 0px;
+    border-left: #464646 solid .5px;
+    border-right: #464646 solid .5px;
+    background-color: #111;
+    outline: none;
+    font-size: 1rem;
+    color: #fff;
+    padding: 10px;
+}
+
+.messages {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
