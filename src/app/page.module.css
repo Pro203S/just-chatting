@@ -14,7 +14,6 @@
 }
 
 .button {
-    margin-top: 10px;
     width: fit-content;
     padding: 7px 12px;
     border-radius: 50px;
@@ -42,7 +41,18 @@
 }
 
 .linearH {
+    margin-top: 10px;
     display: flex;
     flex-direction: row;
-    gap: 7px;
+    gap: 12px;
+}
+
+.link {
+    color: #858585;
+    text-decoration: none;
+    margin: auto 0;
+}
+
+.link:hover {
+    text-decoration: underline;
 }

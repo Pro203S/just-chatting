@@ -37,11 +37,12 @@ export default function Page() {
             </span>
         </InOutAnimation>
         <InOutAnimation animate={animate3}>
-            <div
-                className={css.linearH}
-            >
+            <div className={css.linearH}>
                 <Link className={css.button} href="/register">
                     <span>가입하기</span>
+                </Link>
+                <Link className={css.link} href="/login">
+                    <span>로그인</span>
                 </Link>
             </div>
         </InOutAnimation>
