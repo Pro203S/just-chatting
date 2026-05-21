@@ -9,7 +9,7 @@ export type DialogButton = {
 
 type Props = {
     "title": string,
-    "description": string,
+    "description": string | { "text": string, "draggable": boolean }[],
     "buttons": DialogButton[],
     "open": boolean,
     "onCancel"?: () => any
@@ -86,7 +86,21 @@ export default function Dialog(props: Props) {
         >
             <div className={css.texts}>
                 <span className={css.title}>{title}</span>
-                {description.split("\n").map(v => <span className={css.description} key={v}>{v}</span>)}
+                {typeof description === "string" && description.split("\n").map(v => <span
+                    className={css.description}
+                    key={v}
+                >
+                    {v}
+                </span>)}
+                {typeof description === "object" && description.map(v => <span
+                    className={css.description}
+                    key={v.text}
+                    style={{
+                        "userSelect": v.draggable ? "auto" : "none"
+                    }}
+                >
+                    {v.text}
+                </span>)}
             </div>
             <div className={css.buttons}>
                 {buttons.map(v => <button key={v.text} className={css.button} onClick={v.onClick}>

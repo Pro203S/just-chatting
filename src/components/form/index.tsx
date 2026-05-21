@@ -12,7 +12,7 @@ type FormInputText = {
 
 type Props = {
     "title": string,
-    "description": string,
+    "description": string | { "text": string, "draggable": boolean }[],
     "error"?: string,
     "disabled"?: boolean,
     "showForm": boolean,
@@ -123,7 +123,21 @@ export default function Form(props: Props) {
         >
             <div className={css.texts}>
                 <span className={css.title}>{title}</span>
-                {description.split("\n").map(v => <span className={css.description} key={v}>{v}</span>)}
+                {typeof description === "string" && description.split("\n").map(v => <span
+                    className={css.description}
+                    key={v}
+                >
+                    {v}
+                </span>)}
+                {typeof description === "object" && description.map(v => <span
+                    className={css.description}
+                    key={v.text}
+                    style={{
+                        "userSelect": v.draggable ? "auto" : "none"
+                    }}
+                >
+                    {v.text}
+                </span>)}
                 {error && <span className={css.error}>{error}</span>}
             </div>
             <div className={css.inputs}>
