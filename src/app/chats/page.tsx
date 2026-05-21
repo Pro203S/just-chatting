@@ -13,7 +13,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faBars, faPaperPlane, faPlus, faUsers } from '@fortawesome/free-solid-svg-icons';
 import Form from '@/src/components/form';
 import Dropdown from '@/src/components/dropdown';
-import Dialog, { DialogButton } from '@/src/components/dialog';
+import Dialog, { DialogButton, DialogDescription } from '@/src/components/dialog';
 
 export default function Page() {
     const router = useRouter();
@@ -52,7 +52,7 @@ export default function Page() {
     const [roomNameError, setRoomNameError] = useState<string>();
 
     const [dialogTitle, setDialogTitle] = useState("");
-    const [dialogDesc, setDialogDesc] = useState("");
+    const [dialogDesc, setDialogDesc] = useState<DialogDescription>("");
     const [dialogButtons, setDialogButtons] = useState<DialogButton[]>([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogClosable, setDialogClosable] = useState(true);
@@ -394,7 +394,21 @@ export default function Page() {
         />
         <Form
             title="초대하기"
-            description={`유저를 초대해요.\n현재 방 코드는 ${currentRoom?.id}입니다.`}
+            description={[
+                {
+                    "text": "유저를 초대해요."
+                },
+                {
+                    "text": ""
+                },
+                {
+                    "text": "현재 방 코드:"
+                },
+                {
+                    "text": currentRoom?.id ?? "알 수 없음",
+                    "draggable": true
+                }
+            ]}
             error={inviteUserError}
             disabled={inviteUserLoading}
             inputs={[{
@@ -430,7 +444,15 @@ export default function Page() {
                 setInviteUserShow(false);
 
                 setDialogTitle("초대하기");
-                setDialogDesc("초대할 상대에게 아래 방 코드를 알려주세요.\n" + currentRoom.id);
+                setDialogDesc([
+                    {
+                        "text": "초대할 상대에게 아래 방 코드를 알려주세요."
+                    },
+                    {
+                        "text": currentRoom.id,
+                        "draggable": true
+                    }
+                ]);
                 setDialogButtons([
                     {
                         "text": "확인",
