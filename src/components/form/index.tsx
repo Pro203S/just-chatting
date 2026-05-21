@@ -133,7 +133,7 @@ export default function Form(props: Props) {
                     className={css.description}
                     key={v.text}
                     style={{
-                        "userSelect": v.draggable ? "auto" : "none"
+                        "userSelect": v.draggable ? "text" : "none"
                     }}
                 >
                     {v.text}
