@@ -7,9 +7,11 @@ export type DialogButton = {
     "onClick"?: () => any
 }
 
+export type DialogDescription = string | { "text": string, "draggable"?: boolean }[];
+
 type Props = {
     "title": string,
-    "description": string | { "text": string, "draggable"?: boolean }[],
+    "description": DialogDescription,
     "buttons": DialogButton[],
     "open": boolean,
     "onCancel"?: () => any
