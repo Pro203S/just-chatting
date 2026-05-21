@@ -94,10 +94,12 @@ export async function DELETE(req: NextRequest, { params }: {
                 "message": "대상을 찾을 수 없습니다."
             }, { "status": 404 });
 
+            const targetId = members.get(memberIndex).value();
+
             members.remove(memberIndex);
 
             const io = getSocketServer();
-            io?.to(`user:${members.get(memberIndex).value()}`).emit("roomKicked", room.value());
+            io?.to(`user:${targetId}`).emit("roomKicked", room.value());
             io?.to(`room:${room.value().id}`).emit("roomLeave", room.value(), user);
 
             return new Response(null, { "status": 204 });
