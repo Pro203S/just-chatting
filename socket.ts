@@ -2,6 +2,7 @@ import { DefaultEventsMap, Server, Socket } from "socket.io";
 import type { Server as HttpServer } from "node:http";
 import { verifyAccessToken } from "./src/modules/token";
 import { getDatabase } from "./src/modules/database";
+import removePwd from "./src/modules/removePwd";
 
 type IOServer = Server<
     SocketOnEvents,
@@ -59,8 +60,6 @@ export function initSocketServer(httpServer: HttpServer) {
     }));
 
     server.on("connection", async (socket) => {
-        console.log("  Socket Connected:", socket.id);
-
         const identifyTimeout = setTimeout(() => {
             close(socket, 103, "인증에 실패했습니다.");
         }, 10000);
@@ -92,11 +91,13 @@ export function initSocketServer(httpServer: HttpServer) {
             }
 
             await socket.join(`user:${user.id}`);
+            socket.data.userData = removePwd(user);
+            console.log(`🔗 Socket connected: ${user.name} (${user.id})`);
             socket.emit("welcome", {
-                id: user.id,
-                name: user.name,
-                profile: user.profile,
-                userId: user.userId,
+                "id": user.id,
+                "name": user.name,
+                "profile": user.profile,
+                "userId": user.userId,
             });
         });
 
