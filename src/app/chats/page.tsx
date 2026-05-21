@@ -222,6 +222,9 @@ export default function Page() {
                 sock.on("roomKicked", deleteRoom);
                 sock.on("roomDelete", deleteRoom);
 
+                sock.on("inputing", (user) => setInputers(v => [...v, user.name]));
+                sock.on("cancelInputing", (user) => setInputers(v => [...v].filter(a => a !== user.name)));
+
                 sock.connect();
 
                 const session: APIUser = await new Promise<APIUser>((resolve) => sock.once("welcome", resolve));
@@ -323,7 +326,7 @@ export default function Page() {
         />
         <Form
             title="방 만들기"
-            description="채팅방을 새로 만들게요."
+            description="채팅방을 새로 만들어요."
             error={createRoomError}
             disabled={createRoomLoading}
             inputs={[{

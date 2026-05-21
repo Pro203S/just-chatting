@@ -14,6 +14,7 @@ declare global {
         "welcome": (session: APIUser) => any;
 
         "inputing": (user: APIUser) => any;
+        "cancelInputing": (user: APIUser) => any;
 
         "messageCreate": (message: Message) => any;
         "messageDelete": (message: Message) => any;
