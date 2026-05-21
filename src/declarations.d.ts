@@ -36,7 +36,7 @@ declare global {
 
     // 언젠간 쓸모가 있지 않을까
     type SocketData = {
-        [key: string]: any
+        "userData": APIUser;
     };
 
     type IdPrefixes = "USR" | "ATH" | "MSG" | "ROM";
