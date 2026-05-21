@@ -1,32 +1,15 @@
 import { getDatabase } from "@/src/modules/database";
-import { verifyAccessToken } from "@/src/modules/token";
+import {
+    createTokenNotProvidedResponse,
+    getAuthenticatedUserId
+} from "@/src/modules/apiAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     try {
-        const token = req.headers.get("authorization");
-        if (!token) return NextResponse.json({
-            "code": "TOKEN_NOT_PROVIDED",
-            "message": "로그인해주세요."
-        }, { "status": 401 });
+        if (!getAuthenticatedUserId(req)) return createTokenNotProvidedResponse();
 
-        const payload = await verifyAccessToken(token);
-        if (!payload) return NextResponse.json({
-            "code": "INVALID_TOKEN",
-            "message": "다시 로그인 해주세요."
-        }, { "status": 401 });
-
-        const { userId } = payload;
-
-        const database = getDatabase();
-        const users = database.get("users");
-
-        const user = users.find(v => v.id === userId)?.value?.();
-        if (!user) return NextResponse.json({
-            "code": "USER_NOT_FOUND",
-            "message": "다시 가입해주세요."
-        }, { "status": 403 });
-
+        const users = getDatabase().get("users");
         const id = req.nextUrl.searchParams.get("id");
         if (!id) return NextResponse.json({
             "message": "사용자를 찾을 수 없습니다."

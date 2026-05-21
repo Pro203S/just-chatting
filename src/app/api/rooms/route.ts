@@ -1,36 +1,20 @@
 import { findSocketServer } from "@/socket";
 import { getDatabase } from "@/src/modules/database";
 import generateId from "@/src/modules/generateId";
-import { verifyAccessToken } from "@/src/modules/token";
+import {
+    createTokenNotProvidedResponse,
+    createUserNotFoundResponse,
+    getAuthenticatedUserId
+} from "@/src/modules/apiAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     try {
-        const token = req.headers.get("authorization");
-        if (!token) return NextResponse.json({
-            "code": "TOKEN_NOT_PROVIDED",
-            "message": "로그인해주세요."
-        }, { "status": 401 });
+        const userId = getAuthenticatedUserId(req);
+        if (!userId) return createTokenNotProvidedResponse();
 
-        const payload = await verifyAccessToken(token);
-        if (!payload) return NextResponse.json({
-            "code": "INVALID_TOKEN",
-            "message": "다시 로그인 해주세요."
-        }, { "status": 401 });
-
-        const { userId } = payload;
-
-        const database = getDatabase();
-        const users = database.get("users");
-
-        const user = users.find(v => v.id === userId)?.value?.();
-        if (!user) return NextResponse.json({
-            "code": "USER_NOT_FOUND",
-            "message": "다시 가입해주세요."
-        }, { "status": 403 });
-
-        const rooms = database.get("rooms");
-        const rawFoundRooms = rooms.findAll(v => v.members.includes(user.id));
+        const rooms = getDatabase().get("rooms");
+        const rawFoundRooms = rooms.findAll(v => v.members.includes(userId));
         const foundRooms = rawFoundRooms.map(v => v.value());
         return NextResponse.json(foundRooms, {
             "status": 200
@@ -47,28 +31,14 @@ export async function POST(req: NextRequest) {
     try {
         const { name }: { name: string } = await req.json();
 
-        const token = req.headers.get("authorization");
-        if (!token) return NextResponse.json({
-            "code": "TOKEN_NOT_PROVIDED",
-            "message": "로그인해주세요."
-        }, { "status": 401 });
-
-        const payload = await verifyAccessToken(token);
-        if (!payload) return NextResponse.json({
-            "code": "INVALID_TOKEN",
-            "message": "다시 로그인 해주세요."
-        }, { "status": 401 });
-
-        const { userId } = payload;
+        const userId = getAuthenticatedUserId(req);
+        if (!userId) return createTokenNotProvidedResponse();
 
         const database = getDatabase();
         const users = database.get("users");
 
         const user = users.find(v => v.id === userId)?.value?.();
-        if (!user) return NextResponse.json({
-            "code": "USER_NOT_FOUND",
-            "message": "다시 가입해주세요."
-        }, { "status": 403 });
+        if (!user) return createUserNotFoundResponse();
 
         const rooms = database.get("rooms");
         const room: Room = {
@@ -77,7 +47,8 @@ export async function POST(req: NextRequest) {
             "members": [user.id],
             "name": name ?? `${user.name}님의 방`,
             "icon": user.profile,
-            "owner": user.id
+            "owner": user.id,
+            "messages": []
         };
         rooms.add(room);
 
@@ -97,48 +68,28 @@ export async function PUT(req: NextRequest) {
     try {
         const { id }: { id: string } = await req.json();
 
-        const token = req.headers.get("authorization");
-        if (!token) return NextResponse.json({
-            "code": "TOKEN_NOT_PROVIDED",
-            "message": "로그인해주세요."
-        }, { "status": 401 });
+        const userId = getAuthenticatedUserId(req);
+        if (!userId) return createTokenNotProvidedResponse();
 
-        const payload = await verifyAccessToken(token);
-        if (!payload) return NextResponse.json({
-            "code": "INVALID_TOKEN",
-            "message": "다시 로그인 해주세요."
-        }, { "status": 401 });
-
-        const { userId } = payload;
-
-        const database = getDatabase();
-        const users = database.get("users");
-
-        const user = users.find(v => v.id === userId)?.value?.();
-        if (!user) return NextResponse.json({
-            "code": "USER_NOT_FOUND",
-            "message": "다시 가입해주세요."
-        }, { "status": 403 });
-
-        const rooms = database.get("rooms");
+        const rooms = getDatabase().get("rooms");
         const room = rooms.find(v => v.id === id);
         if (!room) return NextResponse.json({
             "message": "방을 찾을 수 없습니다."
         }, { "status": 404 });
 
         const roomValue = room.value();
-        if (!roomValue.invitedUsers.includes(user.id)) return NextResponse.json({
+        if (!roomValue.invitedUsers.includes(userId)) return NextResponse.json({
             "message": "방에 초대되지 않았습니다."
         }, { "status": 403 });
 
-        room.get("invitedUsers").set(roomValue.invitedUsers.filter(v => v !== user.id));
-        room.get("members").add(user.id);
+        room.get("invitedUsers").set(roomValue.invitedUsers.filter(v => v !== userId));
+        room.get("members").add(userId);
 
         const io = findSocketServer();
-        io?.to(`user:${user.id}`).emit("roomCreate", roomValue);
+        io?.to(`user:${userId}`).emit("roomCreate", roomValue);
         io?.to(`room:${roomValue.id}`).emit("roomJoin", roomValue);
 
-        io?.to(`user:${user.id}`).socketsJoin(`room:${roomValue.id}`);
+        io?.to(`user:${userId}`).socketsJoin(`room:${roomValue.id}`);
 
         return new Response(null, { "status": 204 });
     } catch (err) {

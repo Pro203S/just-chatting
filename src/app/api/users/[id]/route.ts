@@ -1,36 +1,24 @@
 import { getDatabase } from "@/src/modules/database";
 import { hashPassword } from "@/src/modules/password";
-import { verifyAccessToken } from "@/src/modules/token";
+import {
+    createTokenNotProvidedResponse,
+    createUserNotFoundResponse,
+    getAuthenticatedUserId
+} from "@/src/modules/apiAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest, { params }: {
     "params": Promise<{ id: string }>
 }) {
     try {
-        const token = req.headers.get("authorization");
-        if (!token) return NextResponse.json({
-            "code": "TOKEN_NOT_PROVIDED",
-            "message": "로그인해주세요."
-        }, { "status": 401 });
+        const userId = getAuthenticatedUserId(req);
+        if (!userId) return createTokenNotProvidedResponse();
 
-        const payload = await verifyAccessToken(token);
-        if (!payload) return NextResponse.json({
-            "code": "INVALID_TOKEN",
-            "message": "다시 로그인 해주세요."
-        }, { "status": 401 });
-
-        const { userId } = payload;
-
-        const database = getDatabase();
-        const users = database.get("users");
+        const users = getDatabase().get("users");
+        const { id } = await params;
 
         const user = users.find(v => v.id === userId)?.value?.();
-        if (!user) return NextResponse.json({
-            "code": "USER_NOT_FOUND",
-            "message": "다시 가입해주세요."
-        }, { "status": 403 });
-
-        const { id } = await params;
+        if (!user) return createUserNotFoundResponse();
 
         if (id === "me") return NextResponse.json({
             "id": user.id,
@@ -68,28 +56,14 @@ export async function DELETE(req: NextRequest, { params }: {
             "message": "본인이 아닌 유저는 삭제할 수 없습니다."
         }, { "status": 400 });
 
-        const token = req.headers.get("authorization");
-        if (!token) return NextResponse.json({
-            "code": "TOKEN_NOT_PROVIDED",
-            "message": "로그인해주세요."
-        }, { "status": 401 });
-
-        const payload = await verifyAccessToken(token);
-        if (!payload) return NextResponse.json({
-            "code": "INVALID_TOKEN",
-            "message": "다시 로그인 해주세요."
-        }, { "status": 401 });
-
-        const { userId } = payload;
+        const userId = getAuthenticatedUserId(req);
+        if (!userId) return createTokenNotProvidedResponse();
 
         const database = getDatabase();
         const users = database.get("users");
 
         const user = users.find(v => v.id === userId);
-        if (!user) return NextResponse.json({
-            "code": "USER_NOT_FOUND",
-            "message": "다시 가입해주세요."
-        }, { "status": 403 });
+        if (!user) return createUserNotFoundResponse();
 
         const index = users.findIndex(v => v.id === user.get("id").value());
         if (index === -1) return NextResponse.json({
@@ -123,19 +97,8 @@ export async function PUT(req: NextRequest, { params }: {
             "message": "본인이 아닌 유저는 수정할 수 없습니다."
         }, { "status": 400 });
 
-        const token = req.headers.get("authorization");
-        if (!token) return NextResponse.json({
-            "code": "TOKEN_NOT_PROVIDED",
-            "message": "로그인해주세요."
-        }, { "status": 401 });
-
-        const payload = await verifyAccessToken(token);
-        if (!payload) return NextResponse.json({
-            "code": "INVALID_TOKEN",
-            "message": "다시 로그인 해주세요."
-        }, { "status": 401 });
-
-        const { userId } = payload;
+        const userId = getAuthenticatedUserId(req);
+        if (!userId) return createTokenNotProvidedResponse();
 
         const { pw, name, profile }: Partial<Body> = await req.json();
 
@@ -153,10 +116,7 @@ export async function PUT(req: NextRequest, { params }: {
 
         const users = getDatabase().get("users");
         const user = users.find(v => v.id === userId);
-        if (!user) return NextResponse.json({
-            "code": "USER_NOT_FOUND",
-            "message": "다시 가입해주세요."
-        }, { "status": 403 });
+        if (!user) return createUserNotFoundResponse();
 
         if (pw && pw.length >= 8) user.get("password").set(await hashPassword(pw));
         if (name) user.get("name").set(name);
