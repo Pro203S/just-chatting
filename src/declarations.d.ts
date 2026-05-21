@@ -60,10 +60,17 @@ declare global {
 
     type Message = {
         "id": `MSG-${number}`,
-        "content": string,
-        "attachment": Attachment,
+        "content"?: string,
+        "attachment"?: Attachment["id"],
         "sender": User["id"];
     };
+
+    type APIMessage = {
+        "id": Message["id"],
+        "content"?: string,
+        "attachment"?: Attachment,
+        "sender": APIUser
+    }
 
     type Room = {
         "id": `ROM-${number}`,
