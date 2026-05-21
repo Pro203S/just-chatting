@@ -1,15 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
     AUTHENTICATED_USER_ID_HEADER,
-    authenticateApiRequest,
-    isPublicApiRoute
+    authenticateApiRequest
 } from "@/src/modules/apiAuth";
 
 export async function proxy(req: NextRequest) {
-    if (isPublicApiRoute(req.nextUrl.pathname, req.method)) {
-        return NextResponse.next();
-    }
-
     const auth = await authenticateApiRequest(req);
     if ("response" in auth) {
         return auth.response;
@@ -26,5 +21,9 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-    "matcher": "/api/:path*"
+    "matcher": [
+        "/api/rooms/:path*",
+        "/api/users/:path",
+        "/api/messages/:path*"
+    ]
 };

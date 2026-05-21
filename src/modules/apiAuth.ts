@@ -8,18 +8,6 @@ import { verifyAccessToken } from "./token";
 
 export const AUTHENTICATED_USER_ID_HEADER = "x-authenticated-user-id";
 
-export function isPublicApiRoute(pathname: string, method: string) {
-    if (pathname.startsWith("/api/auth/")) {
-        return true;
-    }
-
-    if (pathname === "/api/users" && method === "POST") {
-        return true;
-    }
-
-    return false;
-}
-
 export function createTokenNotProvidedResponse() {
     return NextResponse.json({
         "code": "TOKEN_NOT_PROVIDED",
