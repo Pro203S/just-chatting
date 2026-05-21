@@ -6,6 +6,7 @@ import {
     getAuthenticatedUserId
 } from "@/src/modules/apiAuth";
 import { NextRequest, NextResponse } from "next/server";
+import { MakeApiRoom } from "@/src/modules/makeApiType";
 
 export async function GET(req: NextRequest, { params }: {
     "params": Promise<{ id: string }>
@@ -71,8 +72,8 @@ export async function DELETE(req: NextRequest, { params }: {
             members.remove(memberIndex);
 
             const io = getSocketServer();
-            io?.to(`user:${targetId}`).emit("roomKicked", room.value());
-            io?.to(`room:${room.value().id}`).emit("roomLeave", room.value(), user);
+            io?.to(`user:${targetId}`).emit("roomKicked", MakeApiRoom(room.value()));
+            io?.to(`room:${room.value().id}`).emit("roomLeave", MakeApiRoom(room.value()), user);
 
             return new Response(null, { "status": 204 });
         }
@@ -90,8 +91,8 @@ export async function DELETE(req: NextRequest, { params }: {
         members.remove(memberIndex);
 
         const io = getSocketServer();
-        io?.to(`user:${target}`).emit("roomKicked", room.value());
-        io?.to(`room:${room.value().id}`).emit("roomLeave", room.value(), user);
+        io?.to(`user:${target}`).emit("roomKicked", MakeApiRoom(room.value()));
+        io?.to(`room:${room.value().id}`).emit("roomLeave", MakeApiRoom(room.value()), user);
 
         return new Response(null, { "status": 204 });
     } catch (err) {

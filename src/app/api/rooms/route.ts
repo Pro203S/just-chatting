@@ -7,6 +7,7 @@ import {
     getAuthenticatedUserId
 } from "@/src/modules/apiAuth";
 import { NextRequest, NextResponse } from "next/server";
+import { MakeApiRoom } from "@/src/modules/makeApiType";
 
 export async function GET(req: NextRequest) {
     try {
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
 
         const rooms = getDatabase().get("rooms");
         const rawFoundRooms = rooms.findAll(v => v.members.includes(userId));
-        const foundRooms = rawFoundRooms.map(v => v.value());
+        const foundRooms: APIRoom[] = rawFoundRooms.map(v => MakeApiRoom(v.value()));
         return NextResponse.json(foundRooms, {
             "status": 200
         });
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
         rooms.add(room);
 
         const io = findSocketServer();
-        io?.to(`user:${user.id}`).emit("roomCreate", room);
+        io?.to(`user:${user.id}`).emit("roomCreate", MakeApiRoom(room));
 
         return new Response(null, { "status": 204 });
     } catch (err) {
@@ -86,8 +87,8 @@ export async function PUT(req: NextRequest) {
         room.get("members").add(userId);
 
         const io = findSocketServer();
-        io?.to(`user:${userId}`).emit("roomCreate", roomValue);
-        io?.to(`room:${roomValue.id}`).emit("roomJoin", roomValue);
+        io?.to(`user:${userId}`).emit("roomCreate", MakeApiRoom(roomValue));
+        io?.to(`room:${roomValue.id}`).emit("roomJoin", MakeApiRoom(roomValue));
 
         io?.to(`user:${userId}`).socketsJoin(`room:${roomValue.id}`);
 

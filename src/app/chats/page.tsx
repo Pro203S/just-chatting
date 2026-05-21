@@ -19,7 +19,7 @@ import Ballon from '@/src/components/ballon';
 export default function Page() {
     const router = useRouter();
     const socket = useRef<ReturnType<typeof io>>(null);
-    const currentRoomRef = useRef<Room | undefined>(undefined);
+    const currentRoomRef = useRef<APIRoom | undefined>(undefined);
     const sessionRef = useRef<APIUser | undefined>(undefined);
     const inputMessageRef = useRef<HTMLInputElement | null>(null);
     const sendMessageRef = useRef<HTMLButtonElement | null>(null);
@@ -33,9 +33,9 @@ export default function Page() {
 
     const [loading, setLoading] = useState(true);
     const [session, setSession] = useState<APIUser>();
-    const [rooms, setCurrentRooms] = useState<Room[]>([]);
+    const [rooms, setCurrentRooms] = useState<APIRoom[]>([]);
 
-    const [currentRoom, setCurrentRoom] = useState<Room>();
+    const [currentRoom, setCurrentRoom] = useState<APIRoom>();
     const [members, setMembers] = useState<APIUser[]>([]);
     const [messages, setMessages] = useState<APIMessage[]>([]);
     const [inputers, setInputers] = useState<string[]>([]);
@@ -184,7 +184,7 @@ export default function Page() {
                     setMembers(r.data.filter(v => v.id !== sessionRef.current?.id));
                 };
 
-                const editRoom = (room: Room) => {
+                const editRoom = (room: APIRoom) => {
                     setCurrentRooms(v => {
                         const index = v.findIndex(r => r.id === room.id);
                         if (index === -1) return v;
@@ -198,7 +198,7 @@ export default function Page() {
                     setCurrentRoom(v => v?.id === room.id ? room : v);
                 };
 
-                const deleteRoom = (room: Room) => {
+                const deleteRoom = (room: APIRoom) => {
                     setCurrentRoom(undefined);
                     setCurrentRooms(v => v.filter(r => r.id !== room.id));
                 }
@@ -229,10 +229,10 @@ export default function Page() {
                 setSession(session);
                 setLoading(false);
 
-                const r = await REST<Room[], APIError>("/api/rooms");
+                const r = await REST<APIRoom[], APIError>("/api/rooms");
                 if (!r.success) {
                     alert(r.data.message);
-                    return router.replace("/");
+                    return location.reload();
                 }
 
                 setCurrentRooms(r.data);
@@ -260,16 +260,16 @@ export default function Page() {
         }
         setCurrentRoom(room);
 
-        const r = await REST<APIUser[], APIError>(`/api/rooms/${room.id}/members`);
-        if (!r.success) {
+        const members = await REST<APIUser[], APIError>(`/api/rooms/${room.id}/members`);
+        if (!members.success) {
             alert("예기치 않은 오류가 발생했어요.");
-            console.error(`[handleRoomClick] /api/rooms/${room.id}/members request failed with status code ${r.status}`);
+            console.error(`[handleRoomClick] /api/rooms/${room.id}/members request failed with status code ${members.status}`);
             debugger;
             location.reload();
             return;
         }
 
-        setMembers(r.data.filter(v => v.id !== session?.id));
+        setMembers(members.data.filter(v => v.id !== session?.id));
 
         socket.current.emit("joinRoom", id);
     };

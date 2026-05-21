@@ -2,7 +2,7 @@ import { DefaultEventsMap, Server, Socket } from "socket.io";
 import type { Server as HttpServer } from "node:http";
 import { verifyAccessToken } from "./src/modules/token";
 import { getDatabase } from "./src/modules/database";
-import removePwd from "./src/modules/removePwd";
+import { MakeApiUser } from "./src/modules/makeApiType";
 
 type IOServer = Server<
     SocketOnEvents,
@@ -91,8 +91,8 @@ export function initSocketServer(httpServer: HttpServer) {
             }
 
             await socket.join(`user:${user.id}`);
-            socket.data.userData = removePwd(user);
-            console.log(`🔗 Socket connected: ${user.name} (${user.id})`);
+            socket.data.userData = MakeApiUser(user);
+            console.log(`🔗Socket connected: ${user.name} (${user.id})`);
             socket.emit("welcome", {
                 "id": user.id,
                 "name": user.name,
@@ -111,7 +111,8 @@ export function initSocketServer(httpServer: HttpServer) {
 
         socket.on("disconnect", (reason) => {
             clearTimeout(identifyTimeout);
-            console.log("  Socket Disconnected:", socket.id, reason);
+            const user = socket.data.userData;
+            console.log(`  Socket disconnected: ${user ? `${user.name} (${user.id})` : socket.id} | reason: ${reason}`);
         });
     });
 

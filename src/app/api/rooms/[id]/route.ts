@@ -5,6 +5,8 @@ import {
     getAuthenticatedUserId
 } from "@/src/modules/apiAuth";
 import { NextRequest, NextResponse } from "next/server";
+import { getDeletedUser } from "@/src/modules/constants";
+import { MakeApiRoom, MakeApiUser } from "@/src/modules/makeApiType";
 
 export async function GET(req: NextRequest, { params }: {
     "params": Promise<{ id: string }>
@@ -14,15 +16,23 @@ export async function GET(req: NextRequest, { params }: {
         if (!getAuthenticatedUserId(req)) return createTokenNotProvidedResponse();
 
         const rooms = getDatabase().get("rooms");
+        const users = getDatabase().get("users");
         const room = rooms.find(v => v.id === id)?.value?.();
         if (!room) return NextResponse.json({
             "message": "방을 찾을 수 없습니다."
         }, { "status": 404 });
 
-        return NextResponse.json({
-            ...room,
-            "messages": undefined
-        }, { "status": 200 });
+        return NextResponse.json(({
+            "id": room.id,
+            "icon": room.icon,
+            "members": room.members.map(m => {
+                const found = users.find(u => u.id === m)?.value?.();
+                if (!found) return getDeletedUser();
+
+                return MakeApiUser(found);
+            }),
+            "name": room.name
+        } as APIRoom), { "status": 200 });
     } catch (err) {
         const e = err as Error;
         return NextResponse.json({
@@ -109,7 +119,7 @@ export async function PUT(req: NextRequest, { params }: {
         if (owner) room.get("owner").set(owner);
 
         const io = getSocketServer();
-        io?.to(`room:${room.value().id}`).emit("roomEdit", oldValue, room.value());
+        io?.to(`room:${room.value().id}`).emit("roomEdit", MakeApiRoom(oldValue), MakeApiRoom(room.value()));
 
         return new Response(null, { "status": 204 });
     } catch (err) {
@@ -139,7 +149,7 @@ export async function DELETE(req: NextRequest, { params }: {
         }, { "status": 403 });
 
         const io = getSocketServer();
-        io?.to(`room:${room.value().id}`).emit("roomDelete", room.value());
+        io?.to(`room:${room.value().id}`).emit("roomDelete", MakeApiRoom(room.value()));
 
         rooms.remove(rooms.findIndex(v => v.id === room.value().id));
 
