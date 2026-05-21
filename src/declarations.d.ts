@@ -19,12 +19,12 @@ declare global {
         "messageDelete": (message: Message) => any;
         "messageEdit": (oldMsg: Message, newMsg: Message) => any;
 
-        "roomCreate": (room: Room) => any;
-        "roomEdit": (oldRoom: Room, newRoom: Room) => any;
-        "roomJoin": (room: Room) => any;
-        "roomKicked": (room: Room) => any;
-        "roomLeave": (room: Room, user: APIUser) => any;
-        "roomDelete": (room: Room) => any;
+        "roomCreate": (room: APIRoom) => any;
+        "roomEdit": (oldRoom: APIRoom, newRoom: APIRoom) => any;
+        "roomJoin": (room: APIRoom) => any;
+        "roomKicked": (room: APIRoom) => any;
+        "roomLeave": (room: APIRoom, user: APIUser) => any;
+        "roomDelete": (room: APIRoom) => any;
 
         "error": (code: number, reason: string) => any;
     };
@@ -81,6 +81,14 @@ declare global {
         "owner": User["id"];
         "messages": Message["id"][];
     };
+
+    type APIRoom = {
+        "id": Room["id"];
+        "name": string,
+        "icon": string,
+        "members": APIUser[],
+        "owner": User["id"]
+    }
 
     type Database = {
         "users": User[],
