@@ -16,9 +16,9 @@ declare global {
         "inputing": (user: APIUser) => any;
         "cancelInputing": (user: APIUser) => any;
 
-        "messageCreate": (message: Message) => any;
-        "messageDelete": (message: Message) => any;
-        "messageEdit": (oldMsg: Message, newMsg: Message) => any;
+        "messageCreate": (message: APIMessage) => any;
+        "messageDelete": (message: APIMessage) => any;
+        "messageEdit": (oldMsg: APIMessage, newMsg: APIMessage) => any;
 
         "roomCreate": (room: APIRoom) => any;
         "roomEdit": (oldRoom: APIRoom, newRoom: APIRoom) => any;
