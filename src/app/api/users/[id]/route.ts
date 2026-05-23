@@ -114,6 +114,11 @@ export async function PUT(req: NextRequest, { params }: {
             "message": "예기치 않은 오류에요."
         }, { "status": 415 });
 
+        // base64 때문에 +2MB 오차 허용
+        if (new TextEncoder().encode(profile).length > 18 * 1000 * 1000) return NextResponse.json({
+            "message": "프로필 사진의 용량은 16MB 미만이여야 해요."
+        }, { "status": 413 });
+
         const users = getDatabase().get("users");
         const user = users.find(v => v.id === userId);
         if (!user) return createUserNotFoundResponse();
