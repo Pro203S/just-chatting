@@ -12,7 +12,7 @@ export async function PUT(req: NextRequest, { params }: {
 
         if (!body || typeof body !== "string") return NextResponse.json({
             "message": "body was null"
-        });
+        }, { "status": 400 });
 
         const { id, msgId } = await params;
         const userId = getAuthenticatedUserId(req);
@@ -56,7 +56,7 @@ export async function DELETE(req: NextRequest, { params }: {
 
         if (!body || typeof body !== "string") return NextResponse.json({
             "message": "body was null"
-        });
+        }, { "status": 400 });
 
         const { id, msgId } = await params;
         const userId = getAuthenticatedUserId(req);

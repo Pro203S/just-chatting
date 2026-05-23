@@ -75,11 +75,11 @@ export async function POST(req: NextRequest, { params }: {
 
         if (!body || typeof body !== "string") return NextResponse.json({
             "message": "body was null"
-        });
+        }, { "status": 400 });
 
         if (!attachment || typeof attachment !== "string") return NextResponse.json({
             "message": "attachment was null"
-        });
+        }, { "status": 400 });
 
         // base64 때문에 +2MB 오차 허용
         const attachmentSize = new TextEncoder().encode(attachment).length;
