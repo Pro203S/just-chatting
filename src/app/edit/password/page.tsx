@@ -63,39 +63,34 @@ export default function Page() {
                 </div>
                 <div className={css.buttons}>
                     <button className={css.button} onClick={async () => {
-                        try {
-                            if (!pwRef.current || !pwConfirmRef.current) {
-                                alert("예기치 않은 오류가 발생했어요.");
-                                location.reload();
-                                return;
-                            }
-                            if (pwRef.current.value !== pwConfirmRef.current.value) {
-                                alert("비밀번호가 일치하지 않아요.");
-                                return;
-                            }
+                        if (!pwRef.current || !pwConfirmRef.current) {
+                            alert("예기치 않은 오류가 발생했어요.");
+                            location.reload();
+                            return;
+                        }
+                        if (pwRef.current.value !== pwConfirmRef.current.value) {
+                            alert("비밀번호가 일치하지 않아요.");
+                            return;
+                        }
 
-                            setControlDisabled(true);
+                        setControlDisabled(true);
 
-                            const r = await REST<APIUsersMePUT, APIError>("/api/users/me", {
-                                "method": "PUT",
-                                "data": {
-                                    "pw": pwRef.current.value
-                                }
-                            });
-                            if (!r.success) {
-                                throw new Error(r.data.message);
+                        const r = await REST<APIUsersMePUT, APIError>("/api/users/me", {
+                            "method": "PUT",
+                            "data": {
+                                "pw": pwRef.current.value
                             }
+                        });
+                        if (!r.success) {
+                            alert(r.data.message);
+                            return;
+                        }
 
-                            if (r.data.password) {
-                                alert("비밀번호가 변경되었어요.");
-                                router.push("/chats");
-                            } else {
-                                alert("비밀번호가 변경되지 않았어요.\n비밀번호는 8글자 이상이여야 해요.");
-                            }
-                        } catch (err) {
-                            const e = err as Error;
-                            alert(e.message);
-                        } finally {
+                        if (r.data.password) {
+                            alert("비밀번호가 변경되었어요.");
+                            router.push("/chats");
+                        } else {
+                            alert("비밀번호가 변경되지 않았어요.\n비밀번호는 8글자 이상이여야 해요.");
                             setControlDisabled(false);
                         }
                     }}>

@@ -51,17 +51,17 @@ function LoginPageContent() {
             const data: APIAuthLogin = r.data;
             localStorage.setItem("access_token", data.access_token);
             localStorage.setItem("expires_at", String(new Date().getTime() + (data.expires_in * 1000)));
-
-            const redirectTo = searchParams.get("redirectTo");
-            if (!redirectTo) return router.push("/chats");
-            if (!redirectTo.startsWith("/")) return router.push("/chats");
-            return router.push(redirectTo);
         } catch (err) {
             const e = err as Error;
             alert(e.message);
         } finally {
             setControlDisabled(false);
         }
+
+        const redirectTo = searchParams.get("redirectTo");
+        if (!redirectTo) return router.push("/chats");
+        if (!redirectTo.startsWith("/")) return router.push("/chats");
+        return router.push(redirectTo);
     };
 
     return <InOutAnimation animate>

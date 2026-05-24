@@ -148,14 +148,14 @@ export default function Page() {
                                 if (!r.success) {
                                     throw new Error(r.data.message);
                                 }
-
-                                router.push("/chats");
                             } catch (err) {
                                 const e = err as Error;
                                 alert(e.message);
                             } finally {
                                 setControlDisabled(false);
                             }
+
+                            router.push("/chats");
                         }}>
                             <span>수정하기</span>
                         </button>
@@ -200,12 +200,12 @@ export default function Page() {
 
                                 localStorage.removeItem("access_token");
                                 localStorage.removeItem("expires_at");
-
-                                router.replace("/");
                             } catch (err) {
                                 const e = err as Error;
                                 alert(e.message);
                             }
+
+                            router.replace("/");
                         }}>
                             <span>탈퇴하기</span>
                         </button>

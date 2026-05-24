@@ -48,16 +48,16 @@ export default function Page() {
                 alert(r.data.message);
                 return;
             }
-
-            alert("가입하신걸 축하해요!\n이제 로그인해주세요.");
-
-            router.push("/login");
         } catch (err) {
             const e = err as Error;
             alert(e.message);
         } finally {
             setControlDisabled(false);
         }
+
+        alert("가입하신걸 축하해요!\n이제 로그인해주세요.");
+
+        router.push("/login");
     };
 
     return <InOutAnimation animate>
