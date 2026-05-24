@@ -24,11 +24,12 @@ export function MakeApiRoom(room: Room): APIRoom {
 
 export function MakeApiMessage(message: Message): APIMessage {
     const db = getDatabase().get("users");
+    const aths = getDatabase().get("attachments");
 
     return {
         "id": message.id,
         "sender": db.find(v => v.id === message.sender)?.value?.() ?? getDeletedUser(),
         "content": message.content,
-        "attachment": message.attachment
+        "attachment": aths.find(v => v.id === message.attachment)?.value?.()
     };
 }

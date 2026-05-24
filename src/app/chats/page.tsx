@@ -124,108 +124,112 @@ export default function Page() {
     useEffect(() => {
         (async () => {
             try {
-                const sock: Socket<SocketEmitEvents, SocketOnEvents> = io({
-                    "host": location.host,
-                    "path": "/socket",
-                    "autoConnect": false
-                });
-                socket.current = sock;
-
-                sock.on("error", async (code, reason) => {
-                    sock.disconnect();
-                    if (code === 101) {
-                        await refreshSession();
-                        console.error("[Socket] session expired.");
-                        debugger;
-                        location.reload();
-                        return;
-                    }
-
-                    alert(reason);
-
-                    if (Math.floor(code / 100) === 1) {
-                        localStorage.removeItem("access_token");
-                        localStorage.removeItem("expires_in");
-
-                        router.push("/login");
-                        return;
-                    }
-
-                    router.push("/");
-                    return;
-                });
-
-                sock.on("identify", async () => {
-                    try {
-                        if (!localStorage.getItem("access_token")) {
-                            await refreshSession();
-                        }
-                        sock.emit("identify", localStorage.getItem("access_token") ?? "");
-                    } catch {
-                        sock.disconnect();
-                    }
-                });
-
-                sock.on("roomCreate", (room) => setCurrentRooms(v => [
-                    room,
-                    ...v
-                ]));
-
-                const syncMembers = async (roomId: Room["id"]) => {
-                    const r = await REST<APIUser[], APIError>(`/api/rooms/${roomId}/members`);
-                    if (!r.success) {
-                        alert("예기치 않은 오류가 발생했어요.");
-                        console.error("[syncMembers] Request failed with status code " + r.status);
-                        debugger;
-                        location.reload();
-                        return;
-                    }
-
-                    setMembers(r.data.filter(v => v.id !== sessionRef.current?.id));
-                };
-
-                const editRoom = (room: APIRoom) => {
-                    setCurrentRooms(v => {
-                        const index = v.findIndex(r => r.id === room.id);
-                        if (index === -1) return v;
-
-                        const arr = [...v];
-                        arr[index] = room;
-
-                        return arr;
+                const initalizeSocket = () => {
+                    const sock: Socket<SocketEmitEvents, SocketOnEvents> = io({
+                        "host": location.host,
+                        "path": "/socket",
+                        "autoConnect": false
                     });
 
-                    setCurrentRoom(v => v?.id === room.id ? room : v);
+                    sock.on("error", async (code, reason) => {
+                        sock.disconnect();
+                        if (code === 101) {
+                            await refreshSession();
+                            location.reload();
+                            return;
+                        }
+
+                        alert(reason);
+
+                        if (Math.floor(code / 100) === 1) {
+                            localStorage.removeItem("access_token");
+                            localStorage.removeItem("expires_in");
+
+                            router.push("/login");
+                            return;
+                        }
+
+                        router.push("/");
+                        return;
+                    });
+
+                    sock.on("disconnect", () => {
+                        socket.current = initalizeSocket();
+                        sock.removeAllListeners();
+                    });
+
+                    sock.on("identify", async () => {
+                        try {
+                            if (!localStorage.getItem("access_token")) {
+                                await refreshSession();
+                            }
+                            sock.emit("identify", localStorage.getItem("access_token") ?? "");
+                        } catch {
+                            sock.disconnect();
+                        }
+                    });
+
+                    sock.on("roomCreate", (room) => setCurrentRooms(v => [
+                        room,
+                        ...v
+                    ]));
+
+                    const syncMembers = async (roomId: Room["id"]) => {
+                        const r = await REST<APIUser[], APIError>(`/api/rooms/${roomId}/members`);
+                        if (!r.success) {
+                            alert("채팅방 멤버를 가져오지 못했어요.");
+                            location.reload();
+                            return;
+                        }
+
+                        setMembers(r.data.filter(v => v.id !== sessionRef.current?.id));
+                    };
+
+                    const editRoom = (room: APIRoom) => {
+                        setCurrentRooms(v => {
+                            const index = v.findIndex(r => r.id === room.id);
+                            if (index === -1) return v;
+
+                            const arr = [...v];
+                            arr[index] = room;
+
+                            return arr;
+                        });
+
+                        setCurrentRoom(v => v?.id === room.id ? room : v);
+                    };
+
+                    const deleteRoom = (room: APIRoom) => {
+                        setCurrentRoom(undefined);
+                        setCurrentRooms(v => v.filter(r => r.id !== room.id));
+                    }
+
+                    sock.on("roomJoin", async (room) => {
+                        editRoom(room);
+
+                        if (currentRoomRef.current?.id !== room.id) return;
+
+                        await syncMembers(room.id);
+                    });
+                    sock.on("roomEdit", editRoom);
+                    sock.on("roomLeave", async (room) => {
+                        editRoom(room);
+
+                        if (currentRoomRef.current?.id !== room.id) return;
+
+                        await syncMembers(room.id);
+                    });
+
+                    sock.on("roomKicked", deleteRoom);
+                    sock.on("roomDelete", deleteRoom);
+
+                    sock.connect();
+
+                    return sock;
                 };
 
-                const deleteRoom = (room: APIRoom) => {
-                    setCurrentRoom(undefined);
-                    setCurrentRooms(v => v.filter(r => r.id !== room.id));
-                }
-
-                sock.on("roomJoin", async (room) => {
-                    editRoom(room);
-
-                    if (currentRoomRef.current?.id !== room.id) return;
-
-                    await syncMembers(room.id);
-                });
-                sock.on("roomEdit", editRoom);
-                sock.on("roomLeave", async (room) => {
-                    editRoom(room);
-
-                    if (currentRoomRef.current?.id !== room.id) return;
-
-                    await syncMembers(room.id);
-                });
-
-                sock.on("roomKicked", deleteRoom);
-                sock.on("roomDelete", deleteRoom);
-
-                sock.on("inputing", (user) => setInputers(v => [...v, user.name]));
-                sock.on("cancelInputing", (user) => setInputers(v => [...v].filter(a => a !== user.name)));
-
-                sock.connect();
+                const sock = initalizeSocket();
+                socket.current = sock;
 
                 const session: APIUser = await new Promise<APIUser>((resolve) => sock.once("welcome", resolve));
 
@@ -255,26 +259,29 @@ export default function Page() {
         }
         const room = rooms.find(v => v.id === id);
         if (!room) {
-            alert("예기치 않은 오류가 발생했어요.");
-            console.error("[handleRoomClick] Cannot find the room");
-            debugger;
-            location.reload();
+            alert("예기치 않은 오류가 발생했어요. (3)");
+            setCurrentRoom(undefined);
             return;
         }
         setCurrentRoom(room);
 
         const members = await REST<APIUser[], APIError>(`/api/rooms/${room.id}/members`);
         if (!members.success) {
-            alert("예기치 않은 오류가 발생했어요.");
-            console.error(`[handleRoomClick] /api/rooms/${room.id}/members request failed with status code ${members.status}`);
-            debugger;
-            location.reload();
+            alert("채팅방 멤버를 가져오지 못했어요.");
             return;
         }
 
         setMembers(members.data.filter(v => v.id !== session?.id));
 
         socket.current.emit("joinRoom", id);
+
+        const messages = await REST<APIMessage[], APIError>(`/api/rooms/${room.id}/messages`);
+        if (!messages.success) {
+            alert("채팅방 메시지를 가져오지 못했어요.");
+            return;
+        }
+
+        setMessages(messages.data);
     };
 
     if (loading) return null;
@@ -296,8 +303,8 @@ export default function Page() {
 
                 const file = files[files.length - 1];
 
-                if (file.size > 16 * 1000 * 1000) {
-                    alert("파일 크기는 16MB 미만이여야 합니다.");
+                if (file.size > 25 * 1000 * 1000) {
+                    alert("파일 크기는 25MB 미만이여야 합니다.");
                     return;
                 }
 
@@ -326,7 +333,7 @@ export default function Page() {
         />
         <Form
             title="방 만들기"
-            description="채팅방을 새로 만들어요."
+            description="채팅방을 새로 만들게요."
             error={createRoomError}
             disabled={createRoomLoading}
             inputs={[{
@@ -604,9 +611,7 @@ export default function Page() {
                                             "label": "방 아이콘 수정",
                                             "onClick": () => {
                                                 if (!fileInputRef.current) {
-                                                    console.error("fileInputRef was null.");
-                                                    debugger;
-                                                    reloadWithWarning("예기치 않은 오류가 발생했어요.");
+                                                    reloadWithWarning("예기치 않은 오류가 발생했어요. (1)");
                                                     return;
                                                 }
 
@@ -783,7 +788,20 @@ export default function Page() {
                                     }}
                                 />
                                 <button className={css.iconBtn} ref={sendMessageRef} onClick={async () => {
+                                    const value = inputMessageRef.current?.value;
+                                    if (!inputMessageRef.current || !value) return;
+                                    inputMessageRef.current.value = "";
 
+                                    const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}/messages`, {
+                                        "method": "POST",
+                                        "data": {
+                                            "body": value
+                                        }
+                                    });
+                                    if (!r.success) {
+                                        showErrorDialog(`메시지 보내기에 실패했어요.\n${r.data.message}`);
+                                        return;
+                                    }
                                 }}>
                                     <FontAwesomeIcon icon={faPaperPlane} />
                                 </button>
