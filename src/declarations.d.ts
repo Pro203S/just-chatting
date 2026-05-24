@@ -56,8 +56,16 @@ declare global {
     type Attachment = {
         "id": `ATH-${number}`,
         "url": string,
-        "size": number
+        "size": number,
+        "sender": Attachment["id"]
     };
+
+    type APIAttachment = {
+        "id": `ATH-${number}`,
+        "url": string,
+        "size": number,
+        "sender": APIUser
+    }
 
     type Message = {
         "id": `MSG-${number}`,
@@ -69,7 +77,7 @@ declare global {
     type APIMessage = {
         "id": Message["id"],
         "content"?: string,
-        "attachment"?: Attachment,
+        "attachment"?: APIAttachment,
         "sender": APIUser
     }
 
@@ -89,14 +97,14 @@ declare global {
         "icon": string,
         "members": APIUser[],
         "owner": User["id"]
-    }
+    };
 
     type Database = {
         "users": User[],
         "attachments": Attachment[],
         "messages": Message[],
         "rooms": Room[]
-    };
+    }
 
     type APIError = {
         "code"?: string,
