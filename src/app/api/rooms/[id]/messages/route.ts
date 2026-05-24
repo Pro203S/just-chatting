@@ -13,8 +13,8 @@ export async function GET(req: NextRequest, { params }: {
         const rawOffset = req.nextUrl.searchParams.get("offset");
         const rawCount = req.nextUrl.searchParams.get("count");
 
-        let offset: number;
-        let count: number;
+        let offset: number = NaN;
+        let count: number = NaN;
 
         if (rawOffset) {
             offset = Number(rawOffset);
@@ -34,24 +34,25 @@ export async function GET(req: NextRequest, { params }: {
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
 
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const users = database.get("users");
         const user = users.find(v => v.id === userId)?.value?.();
         if (!user) return createUserNotFoundResponse();
 
-        const rooms = getDatabase().get("rooms");
+        const rooms = database.get("rooms");
         const room = rooms.find(v => v.id === id)?.value?.();
         if (!room) return NextResponse.json({ "message": "채팅방을 찾지 못했어요." }, { "status": 404 });
 
-        const messageDB = getDatabase().get("messages");
-        const messageCount = messageDB.value().length;
-        const messages = messageDB.findAll((v, i) => {
-            const flag = room.messages.includes(v.id);
-            if (!flag) return false;
+        const messageDB = database.get("messages");
+        let messages = messageDB.findAll(v => room.messages.includes(v.id)).map(v => v.value());
 
-            const start = messageCount - offset;
-            const end = start + count;
-            return start >= i && i >= end;
-        }).map(v => v.value());
+        messages = messages.filter(v => room.messages.includes(v.id));
+
+        if (!isNaN(offset))
+            messages = messages.slice(messages.length - offset);
+
+        if (!isNaN(count))
+            messages = messages.slice(0, count);
 
         return NextResponse.json(messages.map(v => ({
             "id": v.id,
@@ -77,8 +78,8 @@ export async function POST(req: NextRequest, { params }: {
             "message": "body was null"
         }, { "status": 400 });
 
-        if (!attachment || typeof attachment !== "string") return NextResponse.json({
-            "message": "attachment was null"
+        if (attachment && typeof attachment !== "string") return NextResponse.json({
+            "message": "attachment's type was wrong"
         }, { "status": 400 });
 
         // base64 때문에 +2MB 오차 허용
@@ -91,19 +92,21 @@ export async function POST(req: NextRequest, { params }: {
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
 
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const users = database.get("users");
         const user = users.find(v => v.id === userId)?.value?.();
         if (!user) return createUserNotFoundResponse();
 
-        const rooms = getDatabase().get("rooms");
-        const room = rooms.find(v => v.id === id)?.value?.();
+        const rooms = database.get("rooms");
+        const room = rooms.find(v => v.id === id);
         if (!room) return NextResponse.json({ "message": "채팅방을 찾지 못했어요." }, { "status": 404 });
+        const roomId = room.value().id;
 
         const io = getSocketServer();
 
-        const messages = getDatabase().get("messages");
+        const messages = database.get("messages");
         if (attachment) {
-            const attachments = getDatabase().get("attachments");
+            const attachments = database.get("attachments");
 
             const ath = {
                 "id": generateId("ATH"),
@@ -118,8 +121,9 @@ export async function POST(req: NextRequest, { params }: {
                 "sender": user.id,
                 "attachment": ath.id
             });
+            room.get("messages").add(msgId);
 
-            io.to(`room:${room.id}`).emit("messageCreate", {
+            io.to(`room:${roomId}`).emit("messageCreate", {
                 "id": msgId,
                 "sender": MakeApiUser(user),
                 "attachment": ath
@@ -134,8 +138,9 @@ export async function POST(req: NextRequest, { params }: {
             "sender": user.id,
             "content": body
         });
+        room.get("messages").add(msgId);
 
-        io.to(`room:${room.id}`).emit("messageCreate", {
+        io.to(`room:${roomId}`).emit("messageCreate", {
             "id": msgId,
             "sender": MakeApiUser(user),
             "content": body

@@ -15,8 +15,9 @@ export async function GET(req: NextRequest, { params }: {
         const { id } = await params;
         if (!getAuthenticatedUserId(req)) return createTokenNotProvidedResponse();
 
-        const rooms = getDatabase().get("rooms");
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const rooms = database.get("rooms");
+        const users = database.get("users");
         const room = rooms.find(v => v.id === id)?.value?.();
         if (!room) return NextResponse.json({
             "message": "방을 찾을 수 없습니다."
@@ -102,7 +103,8 @@ export async function PUT(req: NextRequest, { params }: {
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
 
-        const rooms = getDatabase().get("rooms");
+        const database = getDatabase();
+        const rooms = database.get("rooms");
         const room = rooms.find(v => v.id === id);
         if (!room) return NextResponse.json({
             "message": "방을 찾을 수 없습니다."
@@ -138,7 +140,8 @@ export async function DELETE(req: NextRequest, { params }: {
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
 
-        const rooms = getDatabase().get("rooms");
+        const database = getDatabase();
+        const rooms = database.get("rooms");
         const room = rooms.find(v => v.id === id);
         if (!room) return NextResponse.json({
             "message": "방을 찾을 수 없습니다."

@@ -22,7 +22,8 @@ export async function POST(req: NextRequest) {
             "message": "비밀번호를 입력해주세요!"
         }, { "status": 415 });
 
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const users = database.get("users");
         const user = users.find((v) => v.userId === id)?.value?.();
         if (!user || !await verifyPassword(user.password, pw)) return NextResponse.json({
             "message": "ID 또는 비밀번호가 일치하지 않아요."

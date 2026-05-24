@@ -9,7 +9,8 @@ export async function GET(req: NextRequest) {
     try {
         if (!getAuthenticatedUserId(req)) return createTokenNotProvidedResponse();
 
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const users = database.get("users");
         const id = req.nextUrl.searchParams.get("id");
         if (!id) return NextResponse.json({
             "message": "사용자를 찾을 수 없습니다."

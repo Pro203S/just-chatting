@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
             "message": "닉네임을 입력해주세요!"
         }, { "status": 415 });
 
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const users = database.get("users");
 
         if (users.find(v => v.userId === id)) return NextResponse.json({
             "message": "이미 이 ID를 가진 유저가 존재해요."

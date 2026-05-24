@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
 
-        const rooms = getDatabase().get("rooms");
+        const database = getDatabase();
+        const rooms = database.get("rooms");
         const rawFoundRooms = rooms.findAll(v => v.members.includes(userId));
         const foundRooms: APIRoom[] = rawFoundRooms.map(v => MakeApiRoom(v.value()));
         return NextResponse.json(foundRooms, {
@@ -72,7 +73,8 @@ export async function PUT(req: NextRequest) {
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
 
-        const rooms = getDatabase().get("rooms");
+        const database = getDatabase();
+        const rooms = database.get("rooms");
         const room = rooms.find(v => v.id === id);
         if (!room) return NextResponse.json({
             "message": "방을 찾을 수 없습니다."

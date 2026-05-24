@@ -14,7 +14,8 @@ export async function GET(req: NextRequest, { params }: {
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
 
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const users = database.get("users");
         const { id } = await params;
 
         const user = users.find(v => v.id === userId)?.value?.();
@@ -119,7 +120,8 @@ export async function PUT(req: NextRequest, { params }: {
             "message": "프로필 사진의 용량은 16MB 미만이여야 해요."
         }, { "status": 413 });
 
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const users = database.get("users");
         const user = users.find(v => v.id === userId);
         if (!user) return createUserNotFoundResponse();
 

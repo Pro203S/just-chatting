@@ -4,9 +4,7 @@ import { getDatabase } from "@/src/modules/database";
 import { MakeApiMessage } from "@/src/modules/makeApiType";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PUT(req: NextRequest, { params }: {
-    "params": Promise<{ id: string, msgId: Message["id"] }>
-}) {
+export async function PUT(req: NextRequest, { params }: RouteContext<"/api/rooms/[id]/messages/[msgId]">) {
     try {
         const { body }: { body: string } = await req.json();
 
@@ -18,17 +16,18 @@ export async function PUT(req: NextRequest, { params }: {
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
 
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const users = database.get("users");
         const user = users.find(v => v.id === userId)?.value?.();
         if (!user) return createUserNotFoundResponse();
 
-        const rooms = getDatabase().get("rooms");
+        const rooms = database.get("rooms");
         const room = rooms.find(v => v.id === id)?.value?.();
         if (!room) return NextResponse.json({ "message": "채팅방을 찾지 못했어요." }, { "status": 404 });
 
-        const messages = getDatabase().get("messages");
+        const messages = database.get("messages");
         const target = messages.find(v => v.id === msgId);
-        if (!target) return NextResponse.json({ "message": "메시지를 찾지 못했어요." }, { "status": 404 }); 
+        if (!target) return NextResponse.json({ "message": "메시지를 찾지 못했어요." }, { "status": 404 });
 
         const old = target.value();
         target.get("content").set(body);
@@ -48,9 +47,7 @@ export async function PUT(req: NextRequest, { params }: {
     }
 }
 
-export async function DELETE(req: NextRequest, { params }: {
-    "params": Promise<{ id: string, msgId: Message["id"] }>
-}) {
+export async function DELETE(req: NextRequest, { params }: RouteContext<"/api/rooms/[id]/messages/[msgId]">) {
     try {
         const { body }: { body: string } = await req.json();
 
@@ -62,22 +59,25 @@ export async function DELETE(req: NextRequest, { params }: {
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
 
-        const users = getDatabase().get("users");
+        const database = getDatabase();
+        const users = database.get("users");
         const user = users.find(v => v.id === userId)?.value?.();
         if (!user) return createUserNotFoundResponse();
 
-        const rooms = getDatabase().get("rooms");
-        const room = rooms.find(v => v.id === id)?.value?.();
+        const rooms = database.get("rooms");
+        const room = rooms.find(v => v.id === id);
         if (!room) return NextResponse.json({ "message": "채팅방을 찾지 못했어요." }, { "status": 404 });
 
-        const messages = getDatabase().get("messages");
+        const messages = database.get("messages");
         const target = messages.findIndex(v => v.id === msgId);
-        if (target === -1) return NextResponse.json({ "message": "메시지를 찾지 못했어요." }, { "status": 404 }); 
+        if (target === -1) return NextResponse.json({ "message": "메시지를 찾지 못했어요." }, { "status": 404 });
 
         const targetMsg = messages.get(target).value();
         messages.remove(target);
         const io = getSocketServer();
-        io.to(`room:${room.id}`).emit("messageDelete", MakeApiMessage(targetMsg));
+        const roomMsgs = room.get("messages");
+        roomMsgs.remove(roomMsgs.findIndex(v => v === msgId));
+        io.to(`room:${room.value().id}`).emit("messageDelete", MakeApiMessage(targetMsg));
 
         return new Response(null, { "status": 204 });
     } catch (err) {
