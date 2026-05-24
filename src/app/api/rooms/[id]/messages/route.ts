@@ -58,7 +58,7 @@ export async function GET(req: NextRequest, { params }: {
             "id": v.id,
             "attachment": v.attachment,
             "content": v.content,
-            "sender": users.find(u => u.id === v.sender)?.value?.() ?? getDeletedUser()
+            "sender": MakeApiUser(users.find(u => u.id === v.sender)?.value?.() ?? getDeletedUser())
         } as APIMessage)));
     } catch (err) {
         const e = err as Error;

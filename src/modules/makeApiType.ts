@@ -1,7 +1,7 @@
 import { getDeletedUser } from "./constants";
 import { getDatabase } from "./database";
 
-export function MakeApiUser(user: User): APIUser {
+export function MakeApiUser(user: User | APIUser): APIUser {
     return {
         "id": user.id,
         "name": user.name,
