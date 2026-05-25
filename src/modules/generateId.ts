@@ -4,7 +4,7 @@ import { getDatabase } from "./database";
 const HasDuplicate = (array: { "id": string }[], id: IdTypes) => array.map(v => v.id).includes(id);
 
 export default function generateId<T extends IdPrefixes>(type: T): `${T}-${number}` {
-    const id: IdTypes = `${type}-${randomInt(2147483647)}`;
+    const id: IdTypes = `${type}-${Date.now() * randomInt(2147483647)}`;
 
     let dup = false;
 
