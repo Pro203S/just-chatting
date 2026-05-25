@@ -71,6 +71,8 @@ export default function Page() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogClosable, setDialogClosable] = useState(true);
 
+    //#region 유틸 함수
+    
     const reloadWithWarning = (message: string) => {
         alert(message);
         location.reload();
@@ -202,6 +204,8 @@ export default function Page() {
         setMessages([]);
         setInputers([]);
     };
+
+    //#endregion
 
     useEffect(() => {
         setCss(width > 650 ? desktopCss : mobileCss);
