@@ -16,17 +16,25 @@ import Dropdown from '@/src/components/dropdown';
 import Dialog, { DialogButton, DialogDescription } from '@/src/components/dialog';
 import Ballon from '@/src/components/ballon';
 
+type RoomMessageResponse = {
+    "id": APIMessage["id"];
+    "content"?: APIMessage["content"];
+    "attachment"?: Attachment["id"] | APIAttachment;
+    "sender": APIUser | User;
+};
+
 export default function Page() {
     const router = useRouter();
-    const socket = useRef<ReturnType<typeof io>>(null);
+    const socket = useRef<ReturnType<typeof io> | null>(null);
     const currentRoomRef = useRef<APIRoom | undefined>(undefined);
     const sessionRef = useRef<APIUser | undefined>(undefined);
     const inputMessageRef = useRef<HTMLInputElement | null>(null);
     const sendMessageRef = useRef<HTMLButtonElement | null>(null);
     const messagesRef = useRef<HTMLDivElement | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const attachmentCacheRef = useRef<Partial<Record<Attachment["id"], APIAttachment>>>({});
 
-    const inputingTimeoutRef = useRef<NodeJS.Timeout>(null);
+    const inputingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const { width } = useWindowDimensions();
 
@@ -110,6 +118,91 @@ export default function Page() {
         setDialogOpen(true);
     };
 
+    const resolveAttachment = async (attachment: Attachment["id"] | APIAttachment): Promise<APIAttachment> => {
+        if (typeof attachment !== "string") {
+            attachmentCacheRef.current[attachment.id] = attachment;
+            return attachment;
+        }
+
+        const cached = attachmentCacheRef.current[attachment];
+        if (cached) return cached;
+
+        const r = await REST<APIAttachment, APIError>(`/api/attachments/${attachment}`);
+        if (!r.success) {
+            throw new Error(r.data.message);
+        }
+
+        attachmentCacheRef.current[attachment] = r.data;
+
+        return r.data;
+    };
+
+    const resolveProfile = async (profile: UserProfile): Promise<UserProfile> => {
+        if (profile.type === "asset") return profile;
+
+        const attachment = await resolveAttachment(profile.url);
+
+        return {
+            "type": "asset",
+            "url": attachment.url
+        };
+    };
+
+    const resolveUser = async (user: APIUser | User): Promise<APIUser> => ({
+        "id": user.id,
+        "name": user.name,
+        "profile": await resolveProfile(user.profile),
+        "userId": user.userId
+    });
+
+    const resolveRoom = async (room: APIRoom): Promise<APIRoom> => ({
+        ...room,
+        "icon": await resolveProfile(room.icon),
+        "members": await Promise.all(room.members.map(resolveUser))
+    });
+
+    const resolveMessage = async (message: RoomMessageResponse | APIMessage): Promise<APIMessage> => ({
+        "id": message.id,
+        "content": message.content,
+        "sender": await resolveUser(message.sender),
+        "attachment": message.attachment ? await resolveAttachment(message.attachment) : undefined
+    });
+
+    const syncMembersFromRoom = (room: APIRoom) => {
+        setMembers(room.members.filter(member => member.id !== sessionRef.current?.id));
+    };
+
+    const upsertRoom = (room: APIRoom) => {
+        setCurrentRooms(v => {
+            const index = v.findIndex(foundRoom => foundRoom.id === room.id);
+            if (index === -1) return [
+                room,
+                ...v
+            ];
+
+            const nextRooms = [...v];
+            nextRooms[index] = room;
+
+            return nextRooms;
+        });
+
+        if (currentRoomRef.current?.id === room.id) {
+            setCurrentRoom(room);
+            syncMembersFromRoom(room);
+        }
+    };
+
+    const deleteRoom = (room: APIRoom) => {
+        setCurrentRooms(v => v.filter(foundRoom => foundRoom.id !== room.id));
+
+        if (currentRoomRef.current?.id !== room.id) return;
+
+        setCurrentRoom(undefined);
+        setMembers([]);
+        setMessages([]);
+        setInputers([]);
+    };
+
     useEffect(() => {
         setCss(width > 650 ? desktopCss : mobileCss);
     }, [width]);
@@ -182,55 +275,20 @@ export default function Page() {
 
                     //#region 채팅방 관련 이벤트
 
-                    sock.on("roomCreate", (room) => setCurrentRooms(v => [
-                        room,
-                        ...v
-                    ]));
-
-                    const syncMembers = async (roomId: Room["id"]) => {
-                        const r = await REST<APIUser[], APIError>(`/api/rooms/${roomId}/members`);
-                        if (!r.success) {
-                            alert("채팅방 멤버를 가져오지 못했어요.");
-                            location.reload();
-                            return;
-                        }
-
-                        setMembers(r.data.filter(v => v.id !== sessionRef.current?.id));
-                    };
-
-                    const editRoom = (room: APIRoom) => {
-                        setCurrentRooms(v => {
-                            const index = v.findIndex(r => r.id === room.id);
-                            if (index === -1) return v;
-
-                            const arr = [...v];
-                            arr[index] = room;
-
-                            return arr;
-                        });
-
-                        setCurrentRoom(v => v?.id === room.id ? room : v);
-                    };
-
-                    const deleteRoom = (room: APIRoom) => {
-                        setCurrentRoom(undefined);
-                        setCurrentRooms(v => v.filter(r => r.id !== room.id));
-                    }
+                    sock.on("roomCreate", async (room) => {
+                        upsertRoom(await resolveRoom(room));
+                    });
 
                     sock.on("roomJoin", async (room) => {
-                        editRoom(room);
-
-                        if (currentRoomRef.current?.id !== room.id) return;
-
-                        await syncMembers(room.id);
+                        upsertRoom(await resolveRoom(room));
                     });
-                    sock.on("roomEdit", editRoom);
+                    sock.on("roomEdit", async (_, room) => {
+                        upsertRoom(await resolveRoom(room));
+                    });
                     sock.on("roomLeave", async (room) => {
-                        editRoom(room);
-
-                        if (currentRoomRef.current?.id !== room.id) return;
-
-                        await syncMembers(room.id);
+                        const resolvedRoom = await resolveRoom(room);
+                        upsertRoom(resolvedRoom);
+                        setInputers(v => v.filter(user => resolvedRoom.members.some(member => member.id === user.id)));
                     });
 
                     sock.on("roomKicked", deleteRoom);
@@ -240,12 +298,33 @@ export default function Page() {
 
                     //#region inputing 관련 이벤트
 
-                    sock.on("inputing", (user) => setInputers(v => [...v, { "id": user.id, "name": user.name }]));
+                    sock.on("inputing", (user) => setInputers(v => {
+                        if (v.some(inputer => inputer.id === user.id)) return v;
+
+                        return [
+                            ...v,
+                            { "id": user.id, "name": user.name }
+                        ];
+                    }));
                     sock.on("cancelInputing", (user) => setInputers(v => v.filter(u => u.id !== user.id)));
 
                     //#endregion
 
                     //#region 메시지 관련 이벤트
+
+                    sock.on("messageCreate", async (message) => {
+                        const resolvedMessage = await resolveMessage(message);
+
+                        setMessages(v => [...v, resolvedMessage]);
+                    });
+                    sock.on("messageEdit", async (oldMessage, newMessage) => {
+                        const resolvedMessage = await resolveMessage(newMessage);
+
+                        setMessages(v => v.map(message => message.id === oldMessage.id ? resolvedMessage : message));
+                    });
+                    sock.on("messageDelete", (message) => {
+                        setMessages(v => v.filter(foundMessage => foundMessage.id !== message.id));
+                    });
 
                     //#endregion
 
@@ -257,9 +336,10 @@ export default function Page() {
                 const sock = initalizeSocket();
                 socket.current = sock;
 
-                const session: APIUser = await new Promise<APIUser>((resolve) => sock.once("welcome", resolve));
+                const welcomeSession: APIUser = await new Promise<APIUser>((resolve) => sock.once("welcome", resolve));
+                const resolvedSession = await resolveUser(welcomeSession);
 
-                setSession(session);
+                setSession(resolvedSession);
                 setLoading(false);
 
                 const r = await REST<APIRoom[], APIError>("/api/rooms");
@@ -268,7 +348,7 @@ export default function Page() {
                     return location.reload();
                 }
 
-                setCurrentRooms(r.data);
+                setCurrentRooms(await Promise.all(r.data.map(resolveRoom)));
             } catch (err) {
                 const e = err as Error;
                 alert(e.message);
@@ -289,31 +369,28 @@ export default function Page() {
             setCurrentRoom(undefined);
             return;
         }
+
         setCurrentRoom(room);
-
-        const members = await REST<APIUser[], APIError>(`/api/rooms/${room.id}/members`);
-        if (!members.success) {
-            alert("채팅방 멤버를 가져오지 못했어요.");
-            return;
-        }
-
-        setMembers(members.data.filter(v => v.id !== session?.id));
+        syncMembersFromRoom(room);
+        setMessages([]);
+        setInputers([]);
 
         socket.current.emit("joinRoom", id);
 
-        const messages = await REST<APIMessage[], APIError>(`/api/rooms/${room.id}/messages`);
+        const messages = await REST<RoomMessageResponse[], APIError>(`/api/rooms/${room.id}/messages`);
         if (!messages.success) {
             alert("채팅방 메시지를 가져오지 못했어요.");
             return;
         }
 
-        setMessages(messages.data);
+        setMessages(await Promise.all(messages.data.map(resolveMessage)));
     };
 
     if (loading) return null;
 
     return <>
         <input
+            name="채팅방 프로필 변경"
             type="file"
             accept="image/*"
             ref={fileInputRef}
@@ -325,7 +402,7 @@ export default function Page() {
                 }
 
                 const files = ev.target.files;
-                if (!files || files.length < 0) return;
+                if (!files || files.length <= 0) return;
 
                 const file = files[files.length - 1];
 
@@ -345,10 +422,24 @@ export default function Page() {
 
                 const base64 = await convertImageToBase64(file);
 
+                const ath = await REST<APIAttachment, APIError>(`/api/attachments`, {
+                    "method": "POST",
+                    "data": {
+                        "content": base64
+                    }
+                });
+                if (!ath.success) {
+                    alert(ath.data.message);
+                    return;
+                }
+
                 const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}`, {
                     "method": "PUT",
                     "data": {
-                        "icon": base64
+                        "icon": {
+                            "type": "attachment",
+                            "url": ath.data.id
+                        }
                     }
                 });
                 if (!r.success) {
@@ -754,17 +845,17 @@ export default function Page() {
                         </div>
                         <div className={css.messages} ref={messagesRef}>
                             {(() => {
-                                type ReturnT = {
-                                    "sender": APIMessage["sender"];
+                                type GroupedMessages = {
+                                    "sender": APIUser;
                                     "messages": APIMessage[];
                                 }[];
 
-                                const toReturn: ReturnT = [];
-                                let lastSender: APIUser = messages?.[0]?.sender;
+                                const toReturn: GroupedMessages = [];
+                                let lastSender: APIUser | undefined;
                                 let msgs: APIMessage[] = [];
 
                                 for (const message of messages) {
-                                    if (lastSender?.id !== message.sender?.id) {
+                                    if (lastSender && lastSender.id !== message.sender.id) {
                                         toReturn.push({
                                             "sender": lastSender,
                                             "messages": msgs
@@ -776,13 +867,12 @@ export default function Page() {
                                     lastSender = message.sender;
                                 }
 
-                                if (!lastSender && msgs.length > 0)
+                                if (lastSender && msgs.length > 0)
                                     toReturn.push({
                                         "sender": lastSender,
                                         "messages": msgs
                                     });
 
-                                console.log(toReturn);
                                 return toReturn;
                             })()
                                 .map((v, i) => <Ballon

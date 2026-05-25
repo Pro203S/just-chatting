@@ -117,7 +117,16 @@ export async function PUT(req: NextRequest, { params }: {
         const oldValue = room.value();
 
         if (name) room.get("name").set(name);
-        if (icon) room.get("icon").set(icon);
+        if (icon) {
+            if (icon.type !== "asset" && icon.type !== "attachment") return NextResponse.json({
+                "message": "malformed body"
+            }, { "status": 415 });
+            if (typeof icon.url !== "string") return NextResponse.json({
+                "message": "malformed body"
+            }, { "status": 415 });
+
+            room.get("icon").set(icon);
+        }
         if (owner) room.get("owner").set(owner);
 
         const io = getSocketServer();
