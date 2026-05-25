@@ -9,11 +9,6 @@ export async function POST(req: NextRequest, { params }: {
 }) {
     try {
         const { id } = await params;
-        const { body }: { body: string } = await req.json();
-
-        if (!body || typeof body !== "string") return NextResponse.json({
-            "message": "body was null"
-        }, { "status": 400 });
 
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();
@@ -40,11 +35,6 @@ export async function DELETE(req: NextRequest, { params }: {
 }) {
     try {
         const { id } = await params;
-        const { body }: { body: string } = await req.json();
-
-        if (!body || typeof body !== "string") return NextResponse.json({
-            "message": "body was null"
-        }, { "status": 400 });
 
         const userId = getAuthenticatedUserId(req);
         if (!userId) return createTokenNotProvidedResponse();

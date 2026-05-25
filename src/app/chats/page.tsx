@@ -24,8 +24,9 @@ export default function Page() {
     const inputMessageRef = useRef<HTMLInputElement | null>(null);
     const sendMessageRef = useRef<HTMLButtonElement | null>(null);
     const messagesRef = useRef<HTMLDivElement | null>(null);
-
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const inputingTimeoutRef = useRef<NodeJS.Timeout>(null);
 
     const { width } = useWindowDimensions();
 
@@ -38,7 +39,7 @@ export default function Page() {
     const [currentRoom, setCurrentRoom] = useState<APIRoom>();
     const [members, setMembers] = useState<APIUser[]>([]);
     const [messages, setMessages] = useState<APIMessage[]>([]);
-    const [inputers, setInputers] = useState<string[]>([]);
+    const [inputers, setInputers] = useState<{ "id": string, "name": string }[]>([]);
 
     const [createRoomShow, setCreateRoomShow] = useState(false);
     const [createRoomLoading, setCreateRoomLoading] = useState(false);
@@ -133,6 +134,8 @@ export default function Page() {
                         "autoConnect": false
                     });
 
+                    //#region 소켓 기본 이벤트
+
                     sock.on("error", async (code, reason) => {
                         doNotReconnect = true;
                         sock.disconnect();
@@ -174,6 +177,10 @@ export default function Page() {
                             return;
                         }
                     });
+
+                    //#endregion
+
+                    //#region 채팅방 관련 이벤트
 
                     sock.on("roomCreate", (room) => setCurrentRooms(v => [
                         room,
@@ -228,6 +235,19 @@ export default function Page() {
 
                     sock.on("roomKicked", deleteRoom);
                     sock.on("roomDelete", deleteRoom);
+
+                    //#endregion
+
+                    //#region inputing 관련 이벤트
+
+                    sock.on("inputing", (user) => setInputers(v => [...v, { "id": user.id, "name": user.name }]));
+                    sock.on("cancelInputing", (user) => setInputers(v => v.filter(u => u.id !== user.id)));
+
+                    //#endregion
+
+                    //#region 메시지 관련 이벤트
+
+                    //#endregion
 
                     sock.connect();
 
@@ -776,7 +796,7 @@ export default function Page() {
                                 />)}
                         </div>
                         <div className={css.inputContainer}>
-                            {inputers.length > 0 && <span className={css.inputing}>{inputers.length > 3 ? "여러 사람이 입력중이에요..." : inputers.join("님, ") + "님이 입력중이에요..."}</span>}
+                            {inputers.length > 0 && <span className={css.inputing}>{inputers.length > 3 ? "여러 사람이 입력중이에요..." : inputers.map(v => v.name).join("님, ") + "님이 입력중이에요..."}</span>}
                             <div className={css.linearH}>
                                 <button className={css.iconBtn}>
                                     <FontAwesomeIcon icon={faPlus} />
@@ -786,7 +806,33 @@ export default function Page() {
                                     className={css.input}
                                     ref={inputMessageRef}
                                     placeholder="메시지 입력..."
-                                    onKeyDown={(ev) => {
+                                    onKeyDown={async (ev) => {
+                                        // 입력 핸들링
+                                        const INTERVAL_CALLBACK = async () => {
+                                            if (!socket.current) return;
+
+                                            await REST<null, APIError>(`/api/rooms/${currentRoom.id}/inputing`, {
+                                                "method": "DELETE"
+                                            });
+
+                                            inputingTimeoutRef.current = null;
+                                        };
+                                        if (inputingTimeoutRef.current) {
+                                            // setTimeout이 있을 때
+                                            clearTimeout(inputingTimeoutRef.current);
+                                            inputingTimeoutRef.current = setTimeout(INTERVAL_CALLBACK, 500);
+                                        } else {
+                                            // setTimeout이 없을 때
+                                            // 알파벳이나 숫자가 아니면 리턴
+                                            if (!/^[a-z0-9]$/i.test(ev.key)) return;
+
+                                            inputingTimeoutRef.current = setTimeout(INTERVAL_CALLBACK, 500);
+
+                                            await REST<null, APIError>(`/api/rooms/${currentRoom.id}/inputing`, {
+                                                "method": "POST"
+                                            });
+                                        }
+
                                         if (ev.key !== "Enter") return;
                                         if (!sendMessageRef.current) return;
 
