@@ -43,11 +43,23 @@ declare global {
     type IdPrefixes = "USR" | "ATH" | "MSG" | "ROM";
     type IdTypes = User["id"] | Attachment["id"] | Message["id"] | Room["id"];
 
+    type UserProfileAttachment = {
+        "type": "attachment",
+        "url": Attachment["id"]
+    };
+
+    type UserProfileAsset = {
+        "type": "asset",
+        "url": string
+    };
+
+    type UserProfile = UserProfileAttachment | UserProfileAsset;
+
     type User = {
         "id": `USR-${number}`,
         "userId": string,
         "name": string,
-        "profile": string,
+        "profile": UserProfile,
         "password": string
     };
 
@@ -61,7 +73,7 @@ declare global {
     };
 
     type APIAttachment = {
-        "id": `ATH-${number}`,
+        "id": Attachment["id"],
         "url": string,
         "size": number,
         "uploader": APIUser
@@ -84,7 +96,7 @@ declare global {
     type Room = {
         "id": `ROM-${number}`,
         "name": string,
-        "icon": string,
+        "icon": UserProfile,
         "members": User["id"][],
         "invitedUsers": User["id"][],
         "owner": User["id"];
@@ -94,7 +106,7 @@ declare global {
     type APIRoom = {
         "id": Room["id"];
         "name": string,
-        "icon": string,
+        "icon": UserProfile,
         "members": APIUser[],
         "owner": User["id"]
     };

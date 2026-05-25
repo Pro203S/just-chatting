@@ -41,7 +41,10 @@ export async function POST(req: NextRequest) {
             "userId": id,
             name,
             "password": await hashPassword(pw),
-            "profile": "/assets/defaultUser.png"
+            "profile": {
+                "type": "asset",
+                "url": "/assets/defaultUser.png"
+            }
         };
 
         users.add(user);

@@ -72,21 +72,15 @@ export async function POST(req: NextRequest, { params }: {
     "params": Promise<{ id: string }>
 }) {
     try {
-        const { body, attachment }: { body: string, attachment: string } = await req.json();
+        const { body, attachmentId }: { body: string, attachmentId: Attachment["id"] } = await req.json();
 
         if (!body || typeof body !== "string") return NextResponse.json({
             "message": "body was null"
         }, { "status": 400 });
 
-        if (attachment && typeof attachment !== "string") return NextResponse.json({
+        if (attachmentId && typeof attachmentId !== "string") return NextResponse.json({
             "message": "attachment's type was wrong"
         }, { "status": 400 });
-
-        // base64 때문에 +2MB 오차 허용
-        const attachmentSize = new TextEncoder().encode(attachment).length;
-        if (attachmentSize > 27 * 1000 * 1000) return NextResponse.json({
-            "message": "파일의 용량은 25MB 미만이여야 해요."
-        }, { "status": 413 });
 
         const { id } = await params;
         const userId = getAuthenticatedUserId(req);
@@ -105,29 +99,26 @@ export async function POST(req: NextRequest, { params }: {
         const io = getSocketServer();
 
         const messages = database.get("messages");
-        if (attachment) {
-            const attachments = database.get("attachments");
+        const attachments = database.get("attachments");
+        const foundAttachment = attachments.find(v => v.id !== attachmentId)?.value?.();
 
-            const ath: Attachment = {
-                "id": generateId("ATH"),
-                "uploader": user.id,
-                "url": attachment,
-                "size": attachmentSize
-            };
-            attachments.add(ath);
+        if (attachmentId && !foundAttachment) return NextResponse.json({
+            "message": "파일을 찾지 못했어요."
+        }, { "status": 404 });
 
+        if (foundAttachment) {
             const msgId = generateId("MSG");
             messages.add({
                 "id": msgId,
                 "sender": user.id,
-                "attachment": ath.id
+                "attachment": foundAttachment.id
             });
             room.get("messages").add(msgId);
 
             io.to(`room:${roomId}`).emit("messageCreate", {
                 "id": msgId,
                 "sender": MakeApiUser(user),
-                "attachment": MakeApiAttachment(ath)
+                "attachment": MakeApiAttachment(foundAttachment)
             });
 
             return new Response(null, { "status": 204 });

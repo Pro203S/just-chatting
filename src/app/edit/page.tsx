@@ -94,7 +94,7 @@ export default function Page() {
                     <div className={css.profileBox}>
                         <img
                             draggable={false}
-                            src={source ?? session.profile}
+                            src={source ?? session.profile.url}
                             className={css.profile}
                         />
                         <button className={css.button} style={{ "margin": "auto" }} onClick={async () => {

@@ -86,7 +86,7 @@ type Body = {
     id: string,
     pw: string,
     name: string,
-    profile: string
+    profile: UserProfile
 };
 
 export async function PUT(req: NextRequest, { params }: {
@@ -104,21 +104,12 @@ export async function PUT(req: NextRequest, { params }: {
         const { pw, name, profile }: Partial<Body> = await req.json();
 
         if (pw && typeof pw !== "string") return NextResponse.json({
-            "message": "예기치 않은 오류에요."
+            "message": "malformed body"
         }, { "status": 415 });
 
         if (name && typeof name !== "string") return NextResponse.json({
-            "message": "예기치 않은 오류에요."
+            "message": "malformed body"
         }, { "status": 415 });
-
-        if (profile && typeof profile !== "string") return NextResponse.json({
-            "message": "예기치 않은 오류에요."
-        }, { "status": 415 });
-
-        // base64 때문에 +2MB 오차 허용
-        if (new TextEncoder().encode(profile).length > 18 * 1000 * 1000) return NextResponse.json({
-            "message": "프로필 사진의 용량은 16MB 미만이여야 해요."
-        }, { "status": 413 });
 
         const database = getDatabase();
         const users = database.get("users");
@@ -127,7 +118,16 @@ export async function PUT(req: NextRequest, { params }: {
 
         if (pw && pw.length >= 8) user.get("password").set(await hashPassword(pw));
         if (name) user.get("name").set(name);
-        if (profile) user.get("profile").set(profile);
+        if (profile) {
+            if (profile.type !== "asset" && profile.type !== "attachment") return NextResponse.json({
+                "message": "malformed body"
+            }, { "status": 415 });
+            if (typeof profile.url !== "string") return NextResponse.json({
+                "message": "malformed body"
+            }, { "status": 415 });
+
+            user.get("profile").set(profile);
+        }
 
         return NextResponse.json({
             "password": pw && pw.length >= 8,

@@ -605,7 +605,7 @@ export default function Page() {
                             handleRoomClick(v.id);
                         }}
                     >
-                        <img draggable={false} src={v.icon} className={css.roomIcon} />
+                        <img draggable={false} src={v.icon.url} className={css.roomIcon} />
                         <div className={css.roomTexts}>
                             <span className={css.roomName}>{v.name}</span>
                             <span className={css.roomDesc}>멤버 {v.members.length}명</span>
@@ -622,7 +622,7 @@ export default function Page() {
                     <div className={css.chatting}>
                         <div className={css.roomHeader}>
                             <div className={css.roomInfo}>
-                                <img draggable={false} src={currentRoom.icon} className={css.icon} />
+                                <img draggable={false} src={currentRoom.icon.url} className={css.icon} />
                                 <span className={css.name}>{currentRoom.name}</span>
                             </div>
                             <div className={css.roomMenus}>
@@ -688,7 +688,7 @@ export default function Page() {
                                     items={[
                                         ...(members.map(v => ({
                                             "label": v.name,
-                                            "src": v.profile,
+                                            "src": v.profile.url,
                                             "disabled": currentRoom.owner !== session?.id,
                                             "onClick": () => {
                                                 setDialogTitle("유저 관리");
@@ -789,7 +789,7 @@ export default function Page() {
                                     key={i}
                                     sender={{
                                         "name": v.sender.name,
-                                        "profile": v.sender.profile,
+                                        "profile": v.sender.profile.url,
                                         "sentByMe": session?.id === v.sender.id
                                     }}
                                     messages={v.messages}

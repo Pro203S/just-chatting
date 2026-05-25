@@ -3,7 +3,10 @@ const generateNegativeNum = () => (Math.floor(Math.random() * 1000000) * -1);
 export const getDeletedUser = (): APIUser => ({
     "id": `USR-${generateNegativeNum()}`,
     "name": "Deleted User",
-    "profile": "/assets/defaultUser.png",
+    "profile": {
+        "type": "asset",
+        "url": "/assets/defaultUser.png"
+    },
     "userId": "deleted_user"
 });
 

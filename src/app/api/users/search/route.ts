@@ -4,6 +4,7 @@ import {
     getAuthenticatedUserId
 } from "@/src/modules/apiAuth";
 import { NextRequest, NextResponse } from "next/server";
+import { MakeApiUser } from "@/src/modules/makeApiType";
 
 export async function GET(req: NextRequest) {
     try {
@@ -21,12 +22,7 @@ export async function GET(req: NextRequest) {
             "message": "사용자를 찾을 수 없습니다."
         }, { "status": 404 });
 
-        return NextResponse.json({
-            "id": foundUser.id,
-            "userId": foundUser.userId,
-            "name": foundUser.name,
-            "profile": foundUser.profile
-        }, { "status": 200 });
+        return NextResponse.json(MakeApiUser(foundUser), { "status": 200 });
     } catch (err) {
         const e = err as Error;
         return NextResponse.json({
