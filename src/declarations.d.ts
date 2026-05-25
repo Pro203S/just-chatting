@@ -57,14 +57,14 @@ declare global {
         "id": `ATH-${number}`,
         "url": string,
         "size": number,
-        "sender": Attachment["id"]
+        "uploader": User["id"]
     };
 
     type APIAttachment = {
         "id": `ATH-${number}`,
         "url": string,
         "size": number,
-        "sender": APIUser
+        "uploader": APIUser
     }
 
     type Message = {

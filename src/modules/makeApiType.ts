@@ -1,4 +1,4 @@
-import { getDeletedUser } from "./constants";
+import { getDeletedAttachment, getDeletedUser } from "./constants";
 import { getDatabase } from "./database";
 
 export function MakeApiUser(user: User | APIUser): APIUser {
@@ -26,10 +26,23 @@ export function MakeApiMessage(message: Message): APIMessage {
     const db = getDatabase().get("users");
     const aths = getDatabase().get("attachments");
 
+    const found = aths.find(v => v.id === message.attachment)?.value?.();
+
     return {
         "id": message.id,
         "sender": db.find(v => v.id === message.sender)?.value?.() ?? getDeletedUser(),
         "content": message.content,
-        "attachment": aths.find(v => v.id === message.attachment)?.value?.()
+        "attachment": found ? MakeApiAttachment(found) : getDeletedAttachment()
+    };
+}
+
+export function MakeApiAttachment(ath: Attachment): APIAttachment {
+    const db = getDatabase().get("users");
+
+    return {
+        "id": ath.id,
+        "size": ath.size,
+        "uploader": db.find(v => v.id === ath.uploader)?.value?.() ?? getDeletedUser(),
+        "url": ath.url
     };
 }

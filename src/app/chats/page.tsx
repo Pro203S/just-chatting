@@ -125,6 +125,8 @@ export default function Page() {
         (async () => {
             try {
                 const initalizeSocket = () => {
+                    let doNotReconnect = false;
+
                     const sock: Socket<SocketEmitEvents, SocketOnEvents> = io({
                         "host": location.host,
                         "path": "/socket",
@@ -132,6 +134,7 @@ export default function Page() {
                     });
 
                     sock.on("error", async (code, reason) => {
+                        doNotReconnect = true;
                         sock.disconnect();
                         if (code === 101) {
                             await refreshSession();
@@ -154,7 +157,9 @@ export default function Page() {
                     });
 
                     sock.on("disconnect", () => {
-                        socket.current = initalizeSocket();
+                        if (!doNotReconnect)
+                            socket.current = initalizeSocket();
+
                         sock.removeAllListeners();
                     });
 
@@ -165,7 +170,8 @@ export default function Page() {
                             }
                             sock.emit("identify", localStorage.getItem("access_token") ?? "");
                         } catch {
-                            sock.disconnect();
+                            router.push("/login");
+                            return;
                         }
                     });
 

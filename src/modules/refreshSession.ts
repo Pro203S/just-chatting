@@ -5,7 +5,11 @@ export default async function refreshSession() {
         "withCredentials": true,
         "validateStatus": () => true
     });
-    if (r.status !== 200) throw new Error(r.data.message);
+    if (r.status !== 200) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("expires_at");
+        throw new Error(r.data.message);
+    }
 
     const data: APIAuthLogin = r.data;
 

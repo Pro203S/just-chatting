@@ -3,7 +3,7 @@ import { getAuthenticatedUserId, createTokenNotProvidedResponse, createUserNotFo
 import { getDeletedUser } from "@/src/modules/constants";
 import { getDatabase } from "@/src/modules/database";
 import generateId from "@/src/modules/generateId";
-import { MakeApiUser } from "@/src/modules/makeApiType";
+import { MakeApiAttachment, MakeApiUser } from "@/src/modules/makeApiType";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest, { params }: {
@@ -108,11 +108,12 @@ export async function POST(req: NextRequest, { params }: {
         if (attachment) {
             const attachments = database.get("attachments");
 
-            const ath = {
+            const ath: Attachment = {
                 "id": generateId("ATH"),
+                "uploader": user.id,
                 "url": attachment,
                 "size": attachmentSize
-            }
+            };
             attachments.add(ath);
 
             const msgId = generateId("MSG");
@@ -126,7 +127,7 @@ export async function POST(req: NextRequest, { params }: {
             io.to(`room:${roomId}`).emit("messageCreate", {
                 "id": msgId,
                 "sender": MakeApiUser(user),
-                "attachment": ath
+                "attachment": MakeApiAttachment(ath)
             });
 
             return new Response(null, { "status": 204 });
