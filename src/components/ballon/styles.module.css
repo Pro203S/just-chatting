@@ -1,0 +1,11 @@
+.message {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+
+.profileContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}

@@ -72,7 +72,7 @@ export default function Page() {
     const [dialogClosable, setDialogClosable] = useState(true);
 
     //#region 유틸 함수
-    
+
     const reloadWithWarning = (message: string) => {
         alert(message);
         location.reload();
@@ -883,10 +883,11 @@ export default function Page() {
                                     key={i}
                                     sender={{
                                         "name": v.sender.name,
-                                        "profile": v.sender.profile.url,
+                                        "profile": v.sender.profile,
                                         "sentByMe": session?.id === v.sender.id
                                     }}
                                     messages={v.messages}
+                                    resolveAttachment={resolveAttachment}
                                 />)}
                         </div>
                         <div className={css.inputContainer}>
