@@ -331,7 +331,6 @@ export default function Page() {
                     let doNotReconnect = false;
 
                     const sock: Socket<SocketEmitEvents, SocketOnEvents> = io({
-                        "host": location.host,
                         "path": "/socket",
                         "autoConnect": false
                     });
