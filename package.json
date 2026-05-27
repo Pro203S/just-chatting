@@ -6,7 +6,7 @@
         "dev": "nodemon -w \"socket.ts\" -i database.json -i src -x \"bun server.ts --webpack\"",
         "dev:node": "nodemon -w \"socket.ts\" -i database.json -i src -x \"ts-node server.ts --webpack\"",
         "build": "next build",
-        "start": "NODE_ENV=production bun server.ts --webpack",
+        "start": "PORT=25781 NODE_ENV=production bun server.ts --webpack",
         "start:node": "NODE_ENV=production ts-node server.ts --webpack"
     },
     "dependencies": {
