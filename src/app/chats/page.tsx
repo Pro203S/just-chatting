@@ -331,6 +331,7 @@ export default function Page() {
                     let doNotReconnect = false;
 
                     const sock: Socket<SocketEmitEvents, SocketOnEvents> = io({
+                        "secure": process.env.NODE_ENV === "production",
                         "path": "/socket",
                         "autoConnect": false
                     });
