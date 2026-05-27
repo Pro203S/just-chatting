@@ -33,6 +33,12 @@ type Props = {
     "containerClassName"?: string,
     "containerStyle"?: CSSProperties,
     "defaultOpen"?: boolean,
+    "open"?: boolean,
+    "anchorPosition"?: {
+        "top": number,
+        "left": number
+    },
+    "triggerMode"?: "click" | "manual",
     "onOpenChange"?: (isOpen: boolean) => any
 };
 
@@ -67,6 +73,9 @@ export default function Dropdown(props: Props) {
         containerClassName,
         containerStyle,
         defaultOpen = false,
+        open: controlledOpen,
+        anchorPosition,
+        triggerMode = "click",
         onOpenChange
     } = props;
 
@@ -84,8 +93,11 @@ export default function Dropdown(props: Props) {
         ...(defaultOpen ? DROPDOWN_OPEN_STYLE : DROPDOWN_CLOSED_STYLE),
         ...DROPDOWN_ANIMATE_CONFIG
     }));
+    const isControlled = controlledOpen !== undefined;
+    const isOpen = isControlled ? controlledOpen : open;
 
     const getInitialDropdownPosition = () => {
+        if (anchorPosition) return anchorPosition;
         if (!rootRef.current) return undefined;
 
         const gap = 8;
@@ -98,7 +110,7 @@ export default function Dropdown(props: Props) {
     };
 
     const closeDropdown = () => {
-        setOpen(false);
+        if (!isControlled) setOpen(false);
         onOpenChange?.(false);
     };
 
@@ -107,12 +119,12 @@ export default function Dropdown(props: Props) {
         dropdownAnimationApi.set(DROPDOWN_CLOSED_STYLE);
         setDropdownPosition(getInitialDropdownPosition());
         setRenderDropdown(true);
-        setOpen(true);
+        if (!isControlled) setOpen(true);
         onOpenChange?.(true);
     };
 
     const toggleDropdown = () => {
-        if (open) {
+        if (isOpen) {
             closeDropdown();
             return;
         }
@@ -121,20 +133,34 @@ export default function Dropdown(props: Props) {
     };
 
     const updateDropdownPosition = () => {
-        if (!rootRef.current || !dropdownPanelRef.current) return;
+        if (!dropdownPanelRef.current) return;
 
         const gap = 8;
-        const triggerRect = rootRef.current.getBoundingClientRect();
         const dropdownRect = dropdownPanelRef.current.getBoundingClientRect();
+        let left = gap;
+        let top = gap;
 
-        let left = triggerRect.left;
-        let top = triggerRect.bottom + gap;
+        if (anchorPosition) {
+            left = anchorPosition.left;
+            top = anchorPosition.top;
+        } else {
+            if (!rootRef.current) return;
+
+            const triggerRect = rootRef.current.getBoundingClientRect();
+
+            left = triggerRect.left;
+            top = triggerRect.bottom + gap;
+
+            if (top + dropdownRect.height > window.innerHeight - gap) {
+                top = triggerRect.top - dropdownRect.height - gap;
+            }
+        }
 
         if (left + dropdownRect.width > window.innerWidth - gap) {
             left = window.innerWidth - dropdownRect.width - gap;
         }
         if (top + dropdownRect.height > window.innerHeight - gap) {
-            top = triggerRect.top - dropdownRect.height - gap;
+            top = window.innerHeight - dropdownRect.height - gap;
         }
 
         setDropdownPosition({
@@ -144,12 +170,11 @@ export default function Dropdown(props: Props) {
     };
 
     useEffect(() => {
-        if (!open) return;
+        if (!isOpen) return;
 
         const handlePointerDown = (event: PointerEvent) => {
-            if (!rootRef.current) return;
             if (!(event.target instanceof Node)) return;
-            if (rootRef.current.contains(event.target)) return;
+            if (rootRef.current?.contains(event.target)) return;
             if (dropdownRef.current?.contains(event.target)) return;
 
             closeDropdown();
@@ -168,10 +193,10 @@ export default function Dropdown(props: Props) {
             document.removeEventListener("pointerdown", handlePointerDown);
             document.removeEventListener("keydown", handleKeyDown);
         };
-    }, [open, onOpenChange]);
+    }, [isOpen, onOpenChange]);
 
     useLayoutEffect(() => {
-        if (!open || !renderDropdown) return;
+        if (!isOpen || !renderDropdown) return;
 
         updateDropdownPosition();
 
@@ -184,10 +209,10 @@ export default function Dropdown(props: Props) {
             window.removeEventListener("resize", handleReposition);
             window.removeEventListener("scroll", handleReposition, true);
         };
-    }, [open, renderDropdown, items, dropdown]);
+    }, [anchorPosition, isOpen, renderDropdown, items, dropdown]);
 
     useEffect(() => {
-        if (!open || !renderDropdown) return;
+        if (!isOpen || !renderDropdown) return;
 
         const frame = requestAnimationFrame(() => {
             void dropdownAnimationApi.start({
@@ -198,10 +223,10 @@ export default function Dropdown(props: Props) {
         return () => {
             cancelAnimationFrame(frame);
         };
-    }, [open, renderDropdown, dropdownAnimationApi]);
+    }, [isOpen, renderDropdown, dropdownAnimationApi]);
 
     useEffect(() => {
-        if (open || !renderDropdown) return;
+        if (isOpen || !renderDropdown) return;
 
         let cancelled = false;
 
@@ -218,7 +243,21 @@ export default function Dropdown(props: Props) {
         return () => {
             cancelled = true;
         };
-    }, [open, renderDropdown, dropdownAnimationApi]);
+    }, [isOpen, renderDropdown, dropdownAnimationApi]);
+
+    useEffect(() => {
+        if (!isControlled) return;
+
+        if (controlledOpen) {
+            dropdownAnimationApi.stop();
+            dropdownAnimationApi.set(DROPDOWN_CLOSED_STYLE);
+            setDropdownPosition(getInitialDropdownPosition());
+            setRenderDropdown(true);
+            return;
+        }
+
+        setOpen(false);
+    }, [anchorPosition, controlledOpen, dropdownAnimationApi, isControlled]);
 
     const dropdownContent = items ? items.map((item, index) => {
         if (item.type === "separator") {
@@ -259,38 +298,14 @@ export default function Dropdown(props: Props) {
         </button>;
     }) : dropdown;
 
-    return <div
-        ref={rootRef}
-        className={mergeClassNames(css.container, css.trigger, containerClassName)}
-        style={containerStyle}
-        onPointerDown={(event: ReactPointerEvent<HTMLDivElement>) => {
-            if (event.defaultPrevented) return;
-            if (event.button !== 0) return;
-
-            event.preventDefault();
-            toggleDropdown();
-        }}
-        onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => {
-            if (event.defaultPrevented) return;
-            if (event.key !== "Enter" && event.key !== " ") return;
-
-            event.preventDefault();
-            toggleDropdown();
-        }}
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-haspopup="menu"
-    >
-        {children}
-        {renderDropdown && createPortal(<div
+    const dropdownPortal = renderDropdown && createPortal(<div
             ref={dropdownRef}
             style={{
                 "position": "fixed",
                 "top": dropdownPosition?.top ?? 0,
                 "left": dropdownPosition?.left ?? 0,
                 "visibility": dropdownPosition ? "visible" : "hidden",
-                "pointerEvents": open ? "auto" : "none",
+                "pointerEvents": isOpen ? "auto" : "none",
                 "zIndex": 200,
                 "overflow": "visible"
             }}
@@ -312,6 +327,36 @@ export default function Dropdown(props: Props) {
             >
             {dropdownContent}
             </animated.div>
-        </div>, document.body)}
+        </div>, document.body);
+
+    if (triggerMode === "manual") {
+        return <>{dropdownPortal}</>;
+    }
+
+    return <div
+        ref={rootRef}
+        className={mergeClassNames(css.container, css.trigger, containerClassName)}
+        style={containerStyle}
+        onPointerDown={(event: ReactPointerEvent<HTMLDivElement>) => {
+            if (event.defaultPrevented) return;
+            if (event.button !== 0) return;
+
+            event.preventDefault();
+            toggleDropdown();
+        }}
+        onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => {
+            if (event.defaultPrevented) return;
+            if (event.key !== "Enter" && event.key !== " ") return;
+
+            event.preventDefault();
+            toggleDropdown();
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+    >
+        {children}
+        {dropdownPortal}
     </div>;
 }

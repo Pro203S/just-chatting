@@ -12,7 +12,7 @@ import useWindowDimensions from '@/src/modules/useWindowDimensions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faBars, faPaperPlane, faPlus, faUsers } from '@fortawesome/free-solid-svg-icons';
 import Form from '@/src/components/form';
-import Dropdown from '@/src/components/dropdown';
+import Dropdown, { DropdownItem } from '@/src/components/dropdown';
 import Dialog, { DialogButton, DialogDescription } from '@/src/components/dialog';
 import Ballon from '@/src/components/ballon';
 
@@ -389,6 +389,38 @@ export default function Page() {
 
         setMessages(await Promise.all(messages.data.map(resolveMessage)));
     };
+
+    const getMessageDropdownItems = (message: APIMessage): DropdownItem[] => [
+        {
+            "label": "복사하기",
+            "onClick": async () => {
+                if (!message.content) return;
+
+                await navigator.clipboard.writeText(message.content);
+            }
+        },
+        ...(session?.id === message.sender.id ? [{
+            "type": "separator" as const
+        }, {
+            "label": <span style={{ "color": "#f81313" }}>삭제하기</span>,
+            "onClick": async () => {
+                if (!currentRoom) return;
+                if (!await confirmDialog("메시지 삭제하기", "정말로 이 메시지를 삭제하시겠어요?", {
+                    "ok": "삭제"
+                })) return;
+
+                const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}/messages/${message.id}`, {
+                    "method": "DELETE",
+                    "data": {
+                        "body": message.content ?? "delete"
+                    }
+                });
+                if (!r.success) {
+                    showErrorDialog("메시지 삭제에 실패했어요.\n" + r.data.message);
+                }
+            }
+        }] : [])
+    ];
 
     if (loading) return null;
 
@@ -887,7 +919,7 @@ export default function Page() {
                                         "sentByMe": session?.id === v.sender.id
                                     }}
                                     messages={v.messages}
-                                    resolveAttachment={resolveAttachment}
+                                    getMessageDropdownItems={getMessageDropdownItems}
                                 />)}
                         </div>
                         <div className={css.inputContainer}>
