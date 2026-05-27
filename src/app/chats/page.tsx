@@ -332,6 +332,7 @@ export default function Page() {
 
                     const sock: Socket<SocketEmitEvents, SocketOnEvents> = io({
                         "secure": process.env.NODE_ENV === "production",
+                        "addTrailingSlash": false,
                         "path": "/socket",
                         "autoConnect": false
                     });
