@@ -324,15 +324,21 @@ export default function Page() {
 
                     //#region inputing 관련 이벤트
 
-                    sock.on("inputing", (user) => setInputers(v => {
-                        if (v.some(inputer => inputer.id === user.id)) return v;
+                    sock.on("inputing", (user) => {
+                        if (user.id === sessionRef.current?.id) return;
 
-                        return [
-                            ...v,
-                            { "id": user.id, "name": user.name }
-                        ];
-                    }));
-                    sock.on("cancelInputing", (user) => setInputers(v => v.filter(u => u.id !== user.id)));
+                        setInputers(v => {
+                            if (v.some(inputer => inputer.id === user.id)) return v;
+
+                            return [
+                                ...v,
+                                { "id": user.id, "name": user.name }
+                            ];
+                        });
+                    });
+                    sock.on("cancelInputing", (user) => {
+                        setInputers(v => v.filter(u => u.id !== user.id));
+                    });
 
                     //#endregion
 
@@ -382,6 +388,12 @@ export default function Page() {
             }
         })();
     }, []);
+
+    useEffect(() => {
+        if (!messagesRef.current) return;
+
+        messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+    }, [inputers, messages]);
 
     const handleRoomClick = async (id: Room["id"]) => {
         if (!socket.current) {
@@ -916,47 +928,49 @@ export default function Page() {
                             </div>
                         </div>
                         <div className={css.messages} ref={messagesRef}>
-                            {(() => {
-                                type GroupedMessages = {
-                                    "sender": APIUser;
-                                    "messages": APIMessage[];
-                                }[];
+                            <div className={css.messagesList}>
+                                {(() => {
+                                    type GroupedMessages = {
+                                        "sender": APIUser;
+                                        "messages": APIMessage[];
+                                    }[];
 
-                                const toReturn: GroupedMessages = [];
-                                let lastSender: APIUser | undefined;
-                                let msgs: APIMessage[] = [];
+                                    const toReturn: GroupedMessages = [];
+                                    let lastSender: APIUser | undefined;
+                                    let msgs: APIMessage[] = [];
 
-                                for (const message of messages) {
-                                    if (lastSender && lastSender.id !== message.sender.id) {
+                                    for (const message of messages) {
+                                        if (lastSender && lastSender.id !== message.sender.id) {
+                                            toReturn.push({
+                                                "sender": lastSender,
+                                                "messages": msgs
+                                            });
+                                            msgs = [];
+                                        }
+
+                                        msgs.push(message);
+                                        lastSender = message.sender;
+                                    }
+
+                                    if (lastSender && msgs.length > 0)
                                         toReturn.push({
                                             "sender": lastSender,
                                             "messages": msgs
                                         });
-                                        msgs = [];
-                                    }
 
-                                    msgs.push(message);
-                                    lastSender = message.sender;
-                                }
-
-                                if (lastSender && msgs.length > 0)
-                                    toReturn.push({
-                                        "sender": lastSender,
-                                        "messages": msgs
-                                    });
-
-                                return toReturn;
-                            })()
-                                .map((v, i) => <Ballon
-                                    key={i}
-                                    sender={{
-                                        "name": v.sender.name,
-                                        "profile": v.sender.profile,
-                                        "sentByMe": session?.id === v.sender.id
-                                    }}
-                                    messages={v.messages}
-                                    getMessageDropdownItems={getMessageDropdownItems}
-                                />)}
+                                    return toReturn;
+                                })()
+                                    .map((v, i) => <Ballon
+                                        key={i}
+                                        sender={{
+                                            "name": v.sender.name,
+                                            "profile": v.sender.profile,
+                                            "sentByMe": session?.id === v.sender.id
+                                        }}
+                                        messages={v.messages}
+                                        getMessageDropdownItems={getMessageDropdownItems}
+                                    />)}
+                            </div>
                         </div>
                         <div className={css.inputContainer}>
                             {inputers.length > 0 && <span className={css.inputing}>{inputers.length > 3 ? "여러 사람이 입력중이에요..." : inputers.map(v => v.name).join("님, ") + "님이 입력중이에요..."}</span>}
@@ -970,6 +984,13 @@ export default function Page() {
                                     ref={inputMessageRef}
                                     placeholder="메시지 입력..."
                                     onKeyDown={async (ev) => {
+                                        if (ev.key === "Enter") {
+                                            if (!sendMessageRef.current) return;
+
+                                            sendMessageRef.current.click();
+                                            return
+                                        }
+
                                         // 입력 핸들링
                                         const INTERVAL_CALLBACK = async () => {
                                             if (!socket.current) return;
@@ -984,22 +1005,18 @@ export default function Page() {
                                             // setTimeout이 있을 때
                                             clearTimeout(inputingTimeoutRef.current);
                                             inputingTimeoutRef.current = setTimeout(INTERVAL_CALLBACK, 500);
-                                        } else {
-                                            // setTimeout이 없을 때
-                                            // 알파벳이나 숫자가 아니면 리턴
-                                            if (!/^[a-z0-9]$/i.test(ev.key)) return;
-
-                                            inputingTimeoutRef.current = setTimeout(INTERVAL_CALLBACK, 500);
-
-                                            await REST<null, APIError>(`/api/rooms/${currentRoom.id}/inputing`, {
-                                                "method": "POST"
-                                            });
+                                            return;
                                         }
 
-                                        if (ev.key !== "Enter") return;
-                                        if (!sendMessageRef.current) return;
+                                        // setTimeout이 없을 때
+                                        // 알파벳이나 숫자가 아니면 리턴
+                                        if (!/^[a-z0-9]$/i.test(ev.key)) return;
 
-                                        sendMessageRef.current.click();
+                                        inputingTimeoutRef.current = setTimeout(INTERVAL_CALLBACK, 500);
+
+                                        await REST<null, APIError>(`/api/rooms/${currentRoom.id}/inputing`, {
+                                            "method": "POST"
+                                        });
                                     }}
                                 />
                                 <button className={css.iconBtn} ref={sendMessageRef} onClick={async () => {

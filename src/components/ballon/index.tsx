@@ -22,7 +22,6 @@ export default function Ballon(props: Props) {
 
     return <div className={sender.sentByMe ? css.messageSentByMe : css.message}>
         {!sender.sentByMe && <div className={css.profileContainer}>
-            <span className={css.name}>{sender.name}</span>
             <img
                 className={css.profile}
                 draggable={false}
@@ -30,6 +29,7 @@ export default function Ballon(props: Props) {
             />
         </div>}
         <div className={`${css.contents} ${sender.sentByMe ? css.contentsSentByMe : css.contentsReceived}`}>
+            {!sender.sentByMe && <span className={css.name}>{sender.name}</span>}
             {messages.map((v) => <div
                 key={v.id}
                 className={v.attachment ? css.attachment : css.content}

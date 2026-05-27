@@ -99,14 +99,14 @@ export async function POST(req: NextRequest, { params }: {
         const io = getSocketServer();
 
         const messages = database.get("messages");
-        const attachments = database.get("attachments");
-        const foundAttachment = attachments.find(v => v.id !== attachmentId)?.value?.();
+        if (attachmentId) {
+            const attachments = database.get("attachments");
+            const foundAttachment = attachments.find(v => v.id !== attachmentId)?.value?.();
 
-        if (attachmentId && !foundAttachment) return NextResponse.json({
-            "message": "파일을 찾지 못했어요."
-        }, { "status": 404 });
+            if (!foundAttachment) return NextResponse.json({
+                "message": "파일을 찾지 못했어요."
+            }, { "status": 404 });
 
-        if (foundAttachment) {
             const msgId = generateId("MSG");
             messages.add({
                 "id": msgId,
