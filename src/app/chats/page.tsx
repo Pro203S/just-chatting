@@ -53,7 +53,8 @@ export default function Page() {
     const inputMessageRef = useRef<HTMLInputElement | null>(null);
     const sendMessageRef = useRef<HTMLButtonElement | null>(null);
     const messagesRef = useRef<HTMLDivElement | null>(null);
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const roomProfileInputRef = useRef<HTMLInputElement | null>(null);
+    const attachmentInputRef = useRef<HTMLInputElement | null>(null);
     const attachmentCacheRef = useRef<Partial<Record<Attachment["id"], APIAttachment>>>({});
 
     const inputingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -477,7 +478,7 @@ export default function Page() {
             name="채팅방 프로필 변경"
             type="file"
             accept="image/*"
-            ref={fileInputRef}
+            ref={roomProfileInputRef}
             className="hidden"
             onChange={async (ev) => {
                 if (!currentRoom) {
@@ -524,6 +525,62 @@ export default function Page() {
                             "type": "attachment",
                             "url": ath.data.id
                         }
+                    }
+                });
+                if (!r.success) {
+                    alert(r.data.message);
+                    return;
+                }
+            }}
+        />
+        <input
+            name="attachment 파일 선택"
+            type="file"
+            accept="image/*"
+            ref={attachmentInputRef}
+            className="hidden"
+            onChange={async (ev) => {
+                if (!currentRoom) {
+                    alert("방을 선택해주세요.");
+                    return;
+                }
+
+                const files = ev.target.files;
+                if (!files || files.length <= 0) return;
+
+                const file = files[files.length - 1];
+
+                if (file.size > 25 * 1000 * 1000) {
+                    alert("파일 크기는 25MB 미만이여야 합니다.");
+                    return;
+                }
+
+                function convertImageToBase64(file: File) {
+                    return new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = (error) => reject(error);
+                    });
+                }
+
+                const base64 = await convertImageToBase64(file);
+
+                const ath = await REST<APIAttachment, APIError>(`/api/attachments`, {
+                    "method": "POST",
+                    "data": {
+                        "content": base64
+                    }
+                });
+                if (!ath.success) {
+                    alert(ath.data.message);
+                    return;
+                }
+
+                const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}/messages`, {
+                    "method": "POST",
+                    "data": {
+                        "attachmentId": ath.data.id
                     }
                 });
                 if (!r.success) {
@@ -811,12 +868,12 @@ export default function Page() {
                                         {
                                             "label": "방 아이콘 수정",
                                             "onClick": () => {
-                                                if (!fileInputRef.current) {
+                                                if (!roomProfileInputRef.current) {
                                                     reloadWithWarning("예기치 않은 오류가 발생했어요. (1)");
                                                     return;
                                                 }
 
-                                                fileInputRef.current.click();
+                                                roomProfileInputRef.current.click();
                                             }
                                         },
                                         {
@@ -975,7 +1032,11 @@ export default function Page() {
                         <div className={css.inputContainer}>
                             {inputers.length > 0 && <span className={css.inputing}>{inputers.length > 3 ? "여러 사람이 입력중이에요..." : inputers.map(v => v.name).join("님, ") + "님이 입력중이에요..."}</span>}
                             <div className={css.linearH}>
-                                <button className={css.iconBtn}>
+                                <button className={css.iconBtn} onClick={() => {
+                                    if (!attachmentInputRef.current) return;
+
+                                    attachmentInputRef.current.click();
+                                }}>
                                     <FontAwesomeIcon icon={faPlus} />
                                 </button>
                                 <input

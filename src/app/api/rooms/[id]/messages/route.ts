@@ -74,7 +74,7 @@ export async function POST(req: NextRequest, { params }: {
     try {
         const { body, attachmentId }: { body: string, attachmentId: Attachment["id"] } = await req.json();
 
-        if (!body || typeof body !== "string") return NextResponse.json({
+        if (!attachmentId && (!body || typeof body !== "string")) return NextResponse.json({
             "message": "body was null"
         }, { "status": 400 });
 
