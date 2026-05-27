@@ -23,6 +23,28 @@ type RoomMessageResponse = {
     "sender": APIUser | User;
 };
 
+function getExtensionFromDataUrl(dataUrl: string): string | null {
+    const match = dataUrl.match(/^data:([^;]+);/);
+
+    if (!match) {
+        return null;
+    }
+
+    const mime = match[1];
+
+    const mimeToExt: Record<string, string> = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/webp": "webp",
+        "image/gif": "gif",
+        "text/plain": "txt",
+        "application/json": "json",
+        "application/pdf": "pdf",
+    };
+
+    return mimeToExt[mime] ?? mime.split("/")[1] ?? null;
+}
+
 export default function Page() {
     const router = useRouter();
     const socket = useRef<ReturnType<typeof io> | null>(null);
@@ -391,6 +413,20 @@ export default function Page() {
     };
 
     const getMessageDropdownItems = (message: APIMessage): DropdownItem[] => [
+        ...(message.attachment ? [{
+            "label": "다운로드",
+            "onClick": async () => {
+                if (!message.attachment) return;
+
+                const a = document.createElement("a");
+                a.href = message.attachment.url;
+                a.download = "image." + getExtensionFromDataUrl(message.attachment.url);
+
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }] : []),
         {
             "label": "복사하기",
             "onClick": async () => {

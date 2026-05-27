@@ -32,7 +32,7 @@ export default function Ballon(props: Props) {
         <div className={`${css.contents} ${sender.sentByMe ? css.contentsSentByMe : css.contentsReceived}`}>
             {messages.map((v) => <div
                 key={v.id}
-                className={css.content}
+                className={v.attachment ? css.attachment : css.content}
                 onContextMenu={(event) => {
                     event.preventDefault();
 
@@ -43,7 +43,10 @@ export default function Ballon(props: Props) {
                     });
                 }}
             >
-                <span className={css.text}>{v.content}</span>
+                {v.attachment ?
+                    <img className={css.image} src={v.attachment.url} /> :
+                    <span className={css.text}>{v.content}</span>
+                }
                 {contextMenuState?.messageId === v.id && <Dropdown
                     triggerMode="manual"
                     open={true}

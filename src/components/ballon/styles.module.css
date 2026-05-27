@@ -57,6 +57,24 @@
     border: #afafaf solid 1px;
 }
 
+.attachment {
+    display: inline-flex;
+    flex-direction: row;
+    width: max-content;
+    max-width: min(100%, 32rem);
+    border-radius: 15px;
+    min-width: 0;
+    border: #afafaf solid 1px;
+}
+
+.attachment .image {
+    display: block;
+    width: auto;
+    max-width: 200px;
+    max-height: 200px;
+    color: #fff;
+}
+
 .content .text {
     display: block;
     width: auto;
