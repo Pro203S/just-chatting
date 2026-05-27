@@ -44,7 +44,7 @@ export default function Ballon(props: Props) {
                 }}
             >
                 {v.attachment ?
-                    <img className={css.image} src={v.attachment.url} /> :
+                    <img draggable={false} className={css.image} src={v.attachment.url} /> :
                     <span className={css.text}>{v.content}</span>
                 }
                 {contextMenuState?.messageId === v.id && <Dropdown
