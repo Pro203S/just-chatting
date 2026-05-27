@@ -4,6 +4,26 @@ import { getDatabase } from "@/src/modules/database";
 import { MakeApiMessage } from "@/src/modules/makeApiType";
 import { NextRequest, NextResponse } from "next/server";
 
+function isAttachmentStillUsed(
+    database: ReturnType<typeof getDatabase>,
+    attachmentId: Attachment["id"],
+    deletedMessageId: Message["id"]
+) {
+    const messages = database.get("messages");
+    if (messages.find(v => v.id !== deletedMessageId && v.attachment === attachmentId))
+        return true;
+
+    const users = database.get("users");
+    if (users.find(v => v.profile.type === "attachment" && v.profile.url === attachmentId))
+        return true;
+
+    const rooms = database.get("rooms");
+    if (rooms.find(v => v.icon.type === "attachment" && v.icon.url === attachmentId))
+        return true;
+
+    return false;
+}
+
 export async function PUT(req: NextRequest, { params }: RouteContext<"/api/rooms/[id]/messages/[msgId]">) {
     try {
         const { body }: { body: string } = await req.json();
@@ -73,11 +93,26 @@ export async function DELETE(req: NextRequest, { params }: RouteContext<"/api/ro
         if (target === -1) return NextResponse.json({ "message": "메시지를 찾지 못했어요." }, { "status": 404 });
 
         const targetMsg = messages.get(target).value();
+        const deletedMessage = MakeApiMessage(targetMsg);
+
         messages.remove(target);
+
         const io = getSocketServer();
         const roomMsgs = room.get("messages");
-        roomMsgs.remove(roomMsgs.findIndex(v => v === msgId));
-        io.to(`room:${room.value().id}`).emit("messageDelete", MakeApiMessage(targetMsg));
+        const roomMessageIndex = roomMsgs.findIndex(v => v === msgId);
+
+        if (roomMessageIndex !== -1)
+            roomMsgs.remove(roomMessageIndex);
+
+        if (targetMsg.attachment && !isAttachmentStillUsed(database, targetMsg.attachment, targetMsg.id)) {
+            const attachments = database.get("attachments");
+            const attachmentIndex = attachments.findIndex(v => v.id === targetMsg.attachment);
+
+            if (attachmentIndex !== -1)
+                attachments.remove(attachmentIndex);
+        }
+
+        io.to(`room:${room.value().id}`).emit("messageDelete", deletedMessage);
 
         return new Response(null, { "status": 204 });
     } catch (err) {

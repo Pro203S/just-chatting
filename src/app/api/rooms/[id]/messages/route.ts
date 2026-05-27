@@ -101,7 +101,7 @@ export async function POST(req: NextRequest, { params }: {
         const messages = database.get("messages");
         if (attachmentId) {
             const attachments = database.get("attachments");
-            const foundAttachment = attachments.find(v => v.id !== attachmentId)?.value?.();
+            const foundAttachment = attachments.find(v => v.id === attachmentId)?.value?.();
 
             if (!foundAttachment) return NextResponse.json({
                 "message": "파일을 찾지 못했어요."
