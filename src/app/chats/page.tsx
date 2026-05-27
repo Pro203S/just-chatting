@@ -330,7 +330,7 @@ export default function Page() {
                 const initalizeSocket = () => {
                     let doNotReconnect = false;
 
-                    const sock: Socket<SocketEmitEvents, SocketOnEvents> = io(process.env.NODE_ENV === "production" ? "https://chat.pro203s.kr" : undefined, {
+                    const sock: Socket<SocketEmitEvents, SocketOnEvents> = io(location.origin, {
                         "addTrailingSlash": false,
                         "path": "/socket",
                         "autoConnect": false

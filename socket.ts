@@ -53,6 +53,7 @@ export function initSocketServer(httpServer: HttpServer) {
         DefaultEventsMap,
         SocketData
     >(httpServer, {
+        addTrailingSlash: false,
         path: "/socket",
         cors: {
             origin: "*",
