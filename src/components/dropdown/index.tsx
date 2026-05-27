@@ -25,7 +25,7 @@ type DropdownSeparatorItem = {
 export type DropdownItem = DropdownButtonItem | DropdownSeparatorItem;
 
 type Props = {
-    "children": ReactNode,
+    "children"?: ReactNode,
     "dropdown"?: ReactNode,
     "items"?: DropdownItem[],
     "className"?: string,
