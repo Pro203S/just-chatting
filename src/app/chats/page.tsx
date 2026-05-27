@@ -50,6 +50,7 @@ export default function Page() {
     const socket = useRef<ReturnType<typeof io> | null>(null);
     const currentRoomRef = useRef<APIRoom | undefined>(undefined);
     const sessionRef = useRef<APIUser | undefined>(undefined);
+    const attachmentDragDepthRef = useRef(0);
     const inputMessageRef = useRef<HTMLInputElement | null>(null);
     const sendMessageRef = useRef<HTMLButtonElement | null>(null);
     const messagesRef = useRef<HTMLDivElement | null>(null);
@@ -71,6 +72,7 @@ export default function Page() {
     const [members, setMembers] = useState<APIUser[]>([]);
     const [messages, setMessages] = useState<APIMessage[]>([]);
     const [inputers, setInputers] = useState<{ "id": string, "name": string }[]>([]);
+    const [isAttachmentDragging, setIsAttachmentDragging] = useState(false);
 
     const [createRoomShow, setCreateRoomShow] = useState(false);
     const [createRoomLoading, setCreateRoomLoading] = useState(false);
@@ -141,6 +143,86 @@ export default function Page() {
         ]);
         setDialogClosable(true);
         setDialogOpen(true);
+    };
+
+    const convertFileToBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+    });
+
+    const uploadAttachment = async (file: File) => {
+        if (!file.type.startsWith("image/")) {
+            throw new Error(`${file.name} 파일은 아직 지원하지 않아요. 이미지 파일만 보낼 수 있어요.`);
+        }
+
+        if (file.size > 25 * 1000 * 1000) {
+            throw new Error(`${file.name} 파일 크기는 25MB 미만이어야 해요.`);
+        }
+
+        const base64 = await convertFileToBase64(file);
+        const attachment = await REST<APIAttachment, APIError>("/api/attachments", {
+            "method": "POST",
+            "data": {
+                "content": base64
+            }
+        });
+        if (!attachment.success) {
+            throw new Error(`${file.name} 업로드에 실패했어요.\n${attachment.data.message}`);
+        }
+
+        return attachment.data;
+    };
+
+    const sendAttachmentFiles = async (files: File[]) => {
+        const room = currentRoomRef.current;
+
+        if (!room) {
+            showErrorDialog("방을 선택해주세요.");
+            return;
+        }
+
+        if (files.length <= 0) return;
+
+        const errors: string[] = [];
+
+        for (const file of files) {
+            try {
+                const attachment = await uploadAttachment(file);
+                const message = await REST<null, APIError>(`/api/rooms/${room.id}/messages`, {
+                    "method": "POST",
+                    "data": {
+                        "attachmentId": attachment.id
+                    }
+                });
+
+                if (!message.success) {
+                    await REST<null, APIError>(`/api/attachments/${attachment.id}`, {
+                        "method": "DELETE"
+                    });
+                    throw new Error(message.data.message);
+                }
+            } catch (err) {
+                const error = err as Error;
+                errors.push(error.message);
+            }
+        }
+
+        if (errors.length > 0) {
+            showErrorDialog(errors.join("\n"));
+        }
+    };
+
+    const resetAttachmentDragState = () => {
+        attachmentDragDepthRef.current = 0;
+        setIsAttachmentDragging(false);
+    };
+
+    const hasDraggedFiles = (dataTransfer: DataTransfer | null) => {
+        if (!dataTransfer) return false;
+
+        return Array.from(dataTransfer.types).includes("Files");
     };
 
     const resolveAttachment = async (attachment: Attachment["id"] | APIAttachment): Promise<APIAttachment> => {
@@ -471,6 +553,48 @@ export default function Page() {
         }] : [])
     ];
 
+    const handleChatDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
+        if (!currentRoomRef.current || !hasDraggedFiles(event.dataTransfer)) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        attachmentDragDepthRef.current += 1;
+        setIsAttachmentDragging(true);
+    };
+
+    const handleChatDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+        if (!currentRoomRef.current || !hasDraggedFiles(event.dataTransfer)) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.dataTransfer.dropEffect = "copy";
+    };
+
+    const handleChatDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+        if (!hasDraggedFiles(event.dataTransfer)) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        attachmentDragDepthRef.current = Math.max(attachmentDragDepthRef.current - 1, 0);
+
+        if (attachmentDragDepthRef.current === 0) {
+            setIsAttachmentDragging(false);
+        }
+    };
+
+    const handleChatDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+        if (!hasDraggedFiles(event.dataTransfer)) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        resetAttachmentDragState();
+
+        await sendAttachmentFiles(Array.from(event.dataTransfer.files));
+    };
+
     if (loading) return null;
 
     return <>
@@ -481,55 +605,50 @@ export default function Page() {
             ref={roomProfileInputRef}
             className="hidden"
             onChange={async (ev) => {
-                if (!currentRoom) {
-                    alert("방을 선택해주세요.");
-                    return;
-                }
-
-                const files = ev.target.files;
-                if (!files || files.length <= 0) return;
-
-                const file = files[files.length - 1];
-
-                if (file.size > 25 * 1000 * 1000) {
-                    alert("파일 크기는 25MB 미만이여야 합니다.");
-                    return;
-                }
-
-                function convertImageToBase64(file: File) {
-                    return new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.readAsDataURL(file);
-                        reader.onload = () => resolve(reader.result as string);
-                        reader.onerror = (error) => reject(error);
-                    });
-                }
-
-                const base64 = await convertImageToBase64(file);
-
-                const ath = await REST<APIAttachment, APIError>(`/api/attachments`, {
-                    "method": "POST",
-                    "data": {
-                        "content": base64
+                try {
+                    if (!currentRoom) {
+                        alert("방을 선택해주세요.");
+                        return;
                     }
-                });
-                if (!ath.success) {
-                    alert(ath.data.message);
-                    return;
-                }
 
-                const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}`, {
-                    "method": "PUT",
-                    "data": {
-                        "icon": {
-                            "type": "attachment",
-                            "url": ath.data.id
+                    const files = ev.target.files;
+                    if (!files || files.length <= 0) return;
+
+                    const file = files[files.length - 1];
+
+                    if (file.size > 25 * 1000 * 1000) {
+                        alert("파일 크기는 25MB 미만이여야 합니다.");
+                        return;
+                    }
+
+                    const base64 = await convertFileToBase64(file);
+
+                    const ath = await REST<APIAttachment, APIError>(`/api/attachments`, {
+                        "method": "POST",
+                        "data": {
+                            "content": base64
                         }
+                    });
+                    if (!ath.success) {
+                        alert(ath.data.message);
+                        return;
                     }
-                });
-                if (!r.success) {
-                    alert(r.data.message);
-                    return;
+
+                    const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}`, {
+                        "method": "PUT",
+                        "data": {
+                            "icon": {
+                                "type": "attachment",
+                                "url": ath.data.id
+                            }
+                        }
+                    });
+                    if (!r.success) {
+                        alert(r.data.message);
+                        return;
+                    }
+                } finally {
+                    ev.target.value = "";
                 }
             }}
         />
@@ -537,55 +656,14 @@ export default function Page() {
             name="attachment 파일 선택"
             type="file"
             accept="image/*"
+            multiple
             ref={attachmentInputRef}
             className="hidden"
             onChange={async (ev) => {
-                if (!currentRoom) {
-                    alert("방을 선택해주세요.");
-                    return;
-                }
-
-                const files = ev.target.files;
-                if (!files || files.length <= 0) return;
-
-                const file = files[files.length - 1];
-
-                if (file.size > 25 * 1000 * 1000) {
-                    alert("파일 크기는 25MB 미만이여야 합니다.");
-                    return;
-                }
-
-                function convertImageToBase64(file: File) {
-                    return new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.readAsDataURL(file);
-                        reader.onload = () => resolve(reader.result as string);
-                        reader.onerror = (error) => reject(error);
-                    });
-                }
-
-                const base64 = await convertImageToBase64(file);
-
-                const ath = await REST<APIAttachment, APIError>(`/api/attachments`, {
-                    "method": "POST",
-                    "data": {
-                        "content": base64
-                    }
-                });
-                if (!ath.success) {
-                    alert(ath.data.message);
-                    return;
-                }
-
-                const r = await REST<null, APIError>(`/api/rooms/${currentRoom.id}/messages`, {
-                    "method": "POST",
-                    "data": {
-                        "attachmentId": ath.data.id
-                    }
-                });
-                if (!r.success) {
-                    alert(r.data.message);
-                    return;
+                try {
+                    await sendAttachmentFiles(Array.from(ev.target.files ?? []));
+                } finally {
+                    ev.target.value = "";
                 }
             }}
         />
@@ -851,7 +929,19 @@ export default function Page() {
                         </div>
                         <span className={css.text}>왼쪽에서 채팅방을 선택해주세요.</span>
                     </div> :
-                    <div className={css.chatting}>
+                    <div
+                        className={css.chatting}
+                        onDragEnter={handleChatDragEnter}
+                        onDragOver={handleChatDragOver}
+                        onDragLeave={handleChatDragLeave}
+                        onDrop={handleChatDrop}
+                    >
+                        {isAttachmentDragging && <div className={css.dragOverlay}>
+                            <div className={css.dragOverlayCard}>
+                                <span className={css.dragOverlayTitle}>파일을 가져다 놓아 전송해요.</span>
+                                <span className={css.dragOverlayDescription}>이미지 파일, 최대 25MB까지 전송돼요.</span>
+                            </div>
+                        </div>}
                         <div className={css.roomHeader}>
                             <div className={css.roomInfo}>
                                 <img draggable={false} src={currentRoom.icon.url} className={css.icon} />

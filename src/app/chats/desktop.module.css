@@ -109,6 +109,46 @@
     flex: 1;
     min-width: 0;
     min-height: 0;
+    position: relative;
+}
+
+.dragOverlay {
+    position: absolute;
+    inset: 50px 0 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background-color: rgba(17, 17, 17, .68);
+    backdrop-filter: blur(4px);
+    z-index: 3;
+    pointer-events: none;
+}
+
+.dragOverlayCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    width: min(100%, 420px);
+    padding: 28px 24px;
+    border: 1px dashed rgba(255, 255, 255, .38);
+    border-radius: 24px;
+    background-color: rgba(34, 34, 34, .9);
+    box-sizing: border-box;
+}
+
+.dragOverlayTitle {
+    color: #fff;
+    font-size: 1.16rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.dragOverlayDescription {
+    color: #c8c8c8;
+    font-size: .94rem;
+    text-align: center;
 }
 
 .roomHeader {

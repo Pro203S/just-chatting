@@ -11,3 +11,45 @@
     flex-direction: row;
 }
 
+.chatting {
+    position: relative;
+}
+
+.dragOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background-color: rgba(17, 17, 17, .72);
+    z-index: 3;
+    pointer-events: none;
+}
+
+.dragOverlayCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 20px 16px;
+    border: 1px dashed rgba(255, 255, 255, .35);
+    border-radius: 20px;
+    background-color: rgba(34, 34, 34, .9);
+    box-sizing: border-box;
+}
+
+.dragOverlayTitle {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.dragOverlayDescription {
+    color: #c8c8c8;
+    font-size: .88rem;
+    text-align: center;
+}
+
